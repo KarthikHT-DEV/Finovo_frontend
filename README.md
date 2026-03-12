@@ -90,4 +90,4 @@ frontend/
 5. Open a Pull Request
 
 ---
-Built with ❤️ by the Finovo Team.
+Built with ❤️ by Karthik Bisai - Backend Developer Hashtek Solutions Pvt.Ltd.
