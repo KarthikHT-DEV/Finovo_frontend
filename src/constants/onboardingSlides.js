@@ -15,7 +15,10 @@ const ONBOARDING_SLIDES = [
         subtitle:
             'Log your daily expenses in seconds and stay on top of your financial goals effortlessly.',
         header: 'logo-skip',
-        illustration: { type: 'icon', name: 'wallet-outline' },
+        illustration: { 
+            type: 'image', 
+            source: require('../../assets/images/image.png') 
+        },
         cta: 'arrow-button',
     },
     {
@@ -24,10 +27,11 @@ const ONBOARDING_SLIDES = [
         subtitle:
             'Gain insights into your habits and grow your wealth effortlessly.',
         header: 'back-title',
-        // Place a photo named save_smarter.jpg in frontend/assets/images/
-        // and change type to 'image' with source: require('../assets/images/save_smarter.jpg')
-        illustration: { type: 'photo-placeholder', tint: '#4A6741' },
-        cta: 'get-started',
+        illustration: { 
+            type: 'image', 
+            source: require('../../assets/images/pexels-cottonbro-3943723.jpg') 
+        },
+        cta: 'arrow-button',
     },
     {
         id: '3',
@@ -35,7 +39,10 @@ const ONBOARDING_SLIDES = [
         subtitle:
             'Visualize your savings progress and build healthy financial habits every day.',
         header: 'back-title',
-        illustration: { type: 'icon', name: 'flag-checkered' },
+        illustration: { 
+            type: 'image', 
+            source: require('../../assets/images/pexels-towfiqu-barbhuiya-3440682-9755390.jpg') 
+        },
         cta: 'get-started',
     },
 ];

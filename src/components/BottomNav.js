@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Pressable, Text, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../styles/theme';
 
@@ -13,7 +14,9 @@ const TABS = [
 
 export default function BottomNav({ activeTab = 'home', onTabChange }) {
     const { colors } = useTheme();
-    const styles = React.useMemo(() => getStyles(colors), [colors]);
+    const insets = useSafeAreaInsets();
+    const bottomPadding = Math.max(8, insets.bottom);
+    const styles = React.useMemo(() => getStyles(colors, bottomPadding), [colors, bottomPadding]);
 
     return (
         <View style={styles.wrapper}>
@@ -53,18 +56,18 @@ export default function BottomNav({ activeTab = 'home', onTabChange }) {
     );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors, bottomPadding) => StyleSheet.create({
     wrapper: {
         position: 'absolute',
         bottom: 0,
         left: 0,
         right: 0,
-        height: 76,
+        height: 68 + bottomPadding,
         backgroundColor: colors.backgroundCard,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-around',
-        paddingBottom: 8,
+        paddingBottom: bottomPadding,
         borderTopWidth: 1,
         borderTopColor: colors.divider,
         shadowColor: '#000',
@@ -100,7 +103,7 @@ const getStyles = (colors) => StyleSheet.create({
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
-        marginTop: -18,
+        marginTop: -32,
     },
     fab: {
         width: 56,

@@ -17,6 +17,7 @@ import { useTheme } from '../styles/theme';
  * @param {Function} props.onConfirm - Confirm callback
  * @param {Function} props.onCancel - Cancel callback
  * @param {boolean} [props.destructive] - If true, confirm button uses danger color
+ * @param {boolean} [props.showCancel] - If true, shows cancel button (default: false)
  */
 export default function CustomAlert({ 
     visible, 
@@ -26,7 +27,8 @@ export default function CustomAlert({
     cancelText = 'CANCEL', 
     onConfirm, 
     onCancel,
-    destructive = false 
+    destructive = false,
+    showCancel = false
 }) {
     const { colors } = useTheme();
     const styles = getStyles(colors, destructive);
@@ -43,9 +45,11 @@ export default function CustomAlert({
                     <Text style={styles.title}>{title}</Text>
                     <Text style={styles.message}>{message}</Text>
                     <View style={styles.actions}>
-                        <Pressable onPress={onCancel} style={styles.cancelBtn} hitSlop={10}>
-                            <Text style={styles.cancelLabel}>{cancelText}</Text>
-                        </Pressable>
+                        {showCancel && (
+                            <Pressable onPress={onCancel} style={styles.cancelBtn} hitSlop={10}>
+                                <Text style={styles.cancelLabel}>{cancelText}</Text>
+                            </Pressable>
+                        )}
                         <Pressable onPress={onConfirm} style={styles.confirmBtn} hitSlop={10}>
                             <Text style={styles.confirmLabel}>{confirmText}</Text>
                         </Pressable>

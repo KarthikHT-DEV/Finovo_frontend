@@ -5,15 +5,15 @@ import Typography from './typography';
 const { width } = Dimensions.get('window');
 const circleSize = (width - 40 - 3 * 20) / 4; // 4 columns, 20px padding sides, 20px gap
 
-export const getStyles = (Colors) => StyleSheet.create({
+export const getStyles = (Colors, insets) => StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: Colors.backgroundPrimary,
     },
     scrollContent: {
         paddingHorizontal: 20,
-        paddingTop: 60,
-        paddingBottom: 40,
+        paddingTop: Math.max(insets?.top || 60, 20),
+        paddingBottom: Math.max(insets?.bottom || 0, 40),
     },
 
     // Header
@@ -239,16 +239,16 @@ export const getStyles = (Colors) => StyleSheet.create({
 
     // Modal Calendar
     fullModalContainer: { flex: 1, backgroundColor: Colors.backgroundPrimary },
-    fullModalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 50, paddingBottom: 20 },
+    fullModalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: Math.max(insets?.top || 50, 20), paddingBottom: 20 },
     fullModalTitle: { fontSize: 18, fontWeight: 'bold', color: Colors.textPrimary },
-    fullModalScroll: { paddingHorizontal: 20, paddingBottom: 40 },
+    fullModalScroll: { paddingHorizontal: 20, paddingBottom: Math.max(insets?.bottom || 0, 40) },
     stickyFooter: {
         paddingHorizontal: 20,
-        paddingBottom: 30, // Regular spacing from bottom
+        paddingBottom: Math.max(insets?.bottom || 0, 30), // Regular spacing from bottom
         backgroundColor: Colors.backgroundPrimary,
     },
     stickyFooterKeyboard: {
-        paddingBottom: 10, // Tighter spacing when keyboard up
+        paddingBottom: 0, // No extra spacing when keyboard up to be flush
     },
 });
 

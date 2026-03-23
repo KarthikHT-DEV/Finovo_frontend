@@ -3,6 +3,7 @@ import {
     View, Text, ScrollView, Pressable, ActivityIndicator,
     Animated, Dimensions, StyleSheet, Modal
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Svg, Path, Circle, G, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { PinchGestureHandler, State } from 'react-native-gesture-handler';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -24,7 +25,8 @@ export default function AnalyticsScreen({ onBack, onNavigate, onReportPreview, o
     const DARK = colors.textPrimary;
     const MUTED = colors.textSecondary;
     const ICON_BG = colors.backgroundPrimary === '#121212' ? '#2A2A2A' : '#F0EBE0';
-    const s = React.useMemo(() => getStyles(colors, ACCENT, BG, CARD_BG, DARK, MUTED), [colors]);
+    const insets = useSafeAreaInsets();
+    const s = React.useMemo(() => getStyles(colors, insets, ACCENT, BG, CARD_BG, DARK, MUTED), [colors, insets]);
 
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -40,10 +42,12 @@ export default function AnalyticsScreen({ onBack, onNavigate, onReportPreview, o
     const [appliedStart, setAppliedStart] = useState(null);
     const [appliedEnd, setAppliedEnd] = useState(null);
 
-    const [categoryId, setCategoryId] = useState(null);
+    const [selectedCategories, setSelectedCategories] = useState([]);
+    const [pendingCategories, setPendingCategories] = useState([]); // Temporary selection
     const [categories, setCategories] = useState([]);
     const [catModalVisible, setCatModalVisible] = useState(false);
-    const [paymentMethod, setPaymentMethod] = useState(null);
+    const [selectedPaymentMethods, setSelectedPaymentMethods] = useState([]);
+    const [pendingPaymentMethods, setPendingPaymentMethods] = useState([]); // Temporary selection
     const [pmModalVisible, setPmModalVisible] = useState(false);
 
     // Category Drill-down states
@@ -105,7 +109,7 @@ export default function AnalyticsScreen({ onBack, onNavigate, onReportPreview, o
             const ed = appliedEnd ? formatDateLocal(appliedEnd) : sd;
 
             const res = await analyticsService.getAnalytics(
-                timeframe, categoryId, sd, ed, null, paymentMethod
+                timeframe, selectedCategories, sd, ed, null, selectedPaymentMethods
             );
             setData(res);
 
@@ -121,7 +125,7 @@ export default function AnalyticsScreen({ onBack, onNavigate, onReportPreview, o
         } finally {
             setLoading(false);
         }
-    }, [fadeAnim, timeframe, categoryId, paymentMethod, appliedStart, appliedEnd]);
+    }, [fadeAnim, timeframe, selectedCategories, selectedPaymentMethods, appliedStart, appliedEnd]);
 
     const fetchCatTxns = async (category) => {
         try {
@@ -132,7 +136,8 @@ export default function AnalyticsScreen({ onBack, onNavigate, onReportPreview, o
             const txns = await transactionService.getTransactions({
                 categoryId: category.id,
                 startDate: data?.start_date,
-                endDate: data?.end_date
+                endDate: data?.end_date,
+                paymentMethods: selectedPaymentMethods
             });
             setCatTxns(txns);
         } catch (e) {
@@ -200,17 +205,13 @@ export default function AnalyticsScreen({ onBack, onNavigate, onReportPreview, o
                             <MaterialCommunityIcons name="arrow-left" size={26} color={DARK} />
                         </Pressable>
                         <Text style={s.headerTitle}>Analytics</Text>
-                        <Pressable onPress={() => setFilterVisible(true)} hitSlop={12}>
-                            <MaterialCommunityIcons name="dots-horizontal" size={26} color={DARK} />
-                        </Pressable>
+                        <View style={{ width: 26 }} />
                     </View>
 
                     {/* ── Filter Row ── */}
-                    <View style={s.filterRow}>
-                        <Text style={{ fontSize: 18, fontWeight: '700', color: DARK, flex: 1 }} numberOfLines={1}>
-                            {data.month_label}
-                        </Text>
-                        <Pressable style={s.filterChip} onPress={() => {
+                    <View style={{ marginBottom: 24 }}>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.filterRow}>
+                            <Pressable style={[s.filterChip, { justifyContent: 'center' }]} onPress={() => {
                             setPendingTimeframe(timeframe);
                             setCustomStart(appliedStart);
                             setCustomEnd(appliedEnd);
@@ -224,45 +225,60 @@ export default function AnalyticsScreen({ onBack, onNavigate, onReportPreview, o
 
                         {/* Payment Method filter chip */}
                         <Pressable
-                            style={[s.filterChip, paymentMethod && { backgroundColor: DARK }]}
-                            onPress={() => setPmModalVisible(true)}
+                            style={[s.filterChip, { justifyContent: 'center' }, selectedPaymentMethods.length > 0 && { backgroundColor: ACCENT }]}
+                            onPress={() => {
+                                setPendingPaymentMethods([...selectedPaymentMethods]);
+                                setPmModalVisible(true);
+                            }}
                         >
-                            <MaterialCommunityIcons
-                                name={PAYMENT_METHODS.find(m => m.id === paymentMethod)?.icon || 'contactless-payment'}
-                                size={18}
-                                color={paymentMethod ? '#fff' : DARK}
-                            />
-                            {paymentMethod && (
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                                 <MaterialCommunityIcons
-                                    name="close-circle"
-                                    size={14}
-                                    color="#fff"
-                                    onPress={(e) => { e.stopPropagation?.(); setPaymentMethod(null); }}
-                                    style={{ marginLeft: 4 }}
+                                    name={selectedPaymentMethods.length === 1 ? (PAYMENT_METHODS.find(m => m.id === selectedPaymentMethods[0])?.icon || 'contactless-payment') : 'contactless-payment'}
+                                    size={18}
+                                    color={selectedPaymentMethods.length > 0 ? '#fff' : DARK}
                                 />
+                                <Text style={[s.filterChipText, selectedPaymentMethods.length > 0 && { color: '#fff' }]}>
+                                    {selectedPaymentMethods.length === 0 ? 'Payment' : selectedPaymentMethods.length === 1 ? PAYMENT_METHODS.find(m => m.id === selectedPaymentMethods[0])?.label : `${selectedPaymentMethods.length}`}
+                                </Text>
+                            </View>
+                            {selectedPaymentMethods.length > 0 && (
+                                <Pressable
+                                    onPress={(e) => { e.stopPropagation?.(); setSelectedPaymentMethods([]); }}
+                                    style={{ marginLeft: 4, padding: 2 }}
+                                >
+                                    <MaterialCommunityIcons name="close-circle" size={14} color="#fff" />
+                                </Pressable>
                             )}
                         </Pressable>
 
                         {/* Category filter chip */}
                         <Pressable
-                            style={[s.filterChip, categoryId && { backgroundColor: ACCENT }]}
-                            onPress={() => setCatModalVisible(true)}
+                            style={[s.filterChip, { justifyContent: 'center' }, selectedCategories.length > 0 && { backgroundColor: ACCENT }]}
+                            onPress={() => {
+                                setPendingCategories([...selectedCategories]);
+                                setCatModalVisible(true);
+                            }}
                         >
-                            <MaterialCommunityIcons
-                                name={categories.find(c => c.id === categoryId)?.icon_name || 'shape-outline'}
-                                size={18}
-                                color={categoryId ? '#fff' : DARK}
-                            />
-                            {categoryId && (
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                                 <MaterialCommunityIcons
-                                    name="close-circle"
-                                    size={14}
-                                    color="#fff"
-                                    onPress={(e) => { e.stopPropagation?.(); setCategoryId(null); }}
-                                    style={{ marginLeft: 4 }}
+                                    name={selectedCategories.length === 1 ? (categories.find(c => c.id === selectedCategories[0])?.icon_name || 'shape-outline') : 'shape-outline'}
+                                    size={18}
+                                    color={selectedCategories.length > 0 ? '#fff' : DARK}
                                 />
+                                <Text style={[s.filterChipText, selectedCategories.length > 0 && { color: '#fff' }]}>
+                                    {selectedCategories.length === 0 ? 'Category' : selectedCategories.length === 1 ? (categories.find(c => c.id === selectedCategories[0])?.name) : `${selectedCategories.length}`}
+                                </Text>
+                            </View>
+                            {selectedCategories.length > 0 && (
+                                <Pressable
+                                    onPress={(e) => { e.stopPropagation?.(); setSelectedCategories([]); }}
+                                    style={{ marginLeft: 4, padding: 2 }}
+                                >
+                                    <MaterialCommunityIcons name="close-circle" size={14} color="#fff" />
+                                </Pressable>
                             )}
                         </Pressable>
+                        </ScrollView>
                     </View>
 
                     {/* ── Stat Cards ── */}
@@ -318,9 +334,12 @@ export default function AnalyticsScreen({ onBack, onNavigate, onReportPreview, o
                             <Text style={s.fullReport}>FULL REPORT</Text>
                         </Pressable>
                     </View>
+                    <Text style={{ fontSize: 14, color: MUTED, fontWeight: '600', marginBottom: 12, marginTop: -8 }}>
+                        {data.month_label}
+                    </Text>
 
                     <View style={s.chartCard}>
-                        {timeframe === 'year' || data.weekly_data.length > 7 ? (() => {
+                        {((timeframe !== 'year' && data.weekly_data.length > 10) || (timeframe === 'custom' && data.weekly_data.length > 12)) ? (() => {
                             const minSpacing = 65; // pixels per node
                             const baseW = Math.max(width - 80, data.weekly_data.length * minSpacing);
                             const chartWidth = baseW * zoomScale;
@@ -390,29 +409,40 @@ export default function AnalyticsScreen({ onBack, onNavigate, onReportPreview, o
                             );
                         })() : (
                             /* Bars */
-                            <View style={s.barsRow}>
-                                {data.weekly_data.map((week, i) => {
-                                    const pct = week.amount / maxWeek;
-                                    const isMax = week.amount === maxWeek && week.amount > 0;
-                                    const isActive = activeBar?.label === week.label;
-                                    return (
-                                        <Pressable key={week.label} style={s.barCol} onPress={() => setActiveBar(week)}>
-                                            <View style={s.barTrack}>
-                                                <View
-                                                    style={[
-                                                        s.barFill,
-                                                        { height: `${Math.max(pct * 100, 4)}%` },
-                                                        isActive ? { backgroundColor: DARK } : (isMax && s.barFillActive),
-                                                    ]}
-                                                />
-                                            </View>
-                                            <Text style={[s.barLabel, (isMax || isActive) && s.barLabelActive]}>
-                                                {week.label}
-                                            </Text>
-                                        </Pressable>
-                                    );
-                                })}
-                            </View>
+                            <ScrollView
+                                horizontal={data.weekly_data.length > 5}
+                                showsHorizontalScrollIndicator={false}
+                                bounces={false}
+                                contentContainerStyle={data.weekly_data.length <= 5 && { flex: 1 }}
+                            >
+                                <View style={[s.barsRow, data.weekly_data.length > 5 ? { gap: 12, paddingHorizontal: 10 } : { justifyContent: 'space-between', paddingHorizontal: 20, flex: 1 }]}>
+                                    {data.weekly_data.map((week, i) => {
+                                        const pct = week.amount / maxWeek;
+                                        const isMax = week.amount === maxWeek && week.amount > 0;
+                                        const isActive = activeBar?.label === week.label;
+                                        return (
+                                            <Pressable
+                                                key={week.label}
+                                                style={[s.barCol, data.weekly_data.length > 5 ? { width: 48, flex: 0 } : { flex: 0, width: 60 }]}
+                                                onPress={() => setActiveBar(week)}
+                                            >
+                                                <View style={s.barTrack}>
+                                                    <View
+                                                        style={[
+                                                            s.barFill,
+                                                            { height: `${Math.max(pct * 100, 4)}%` },
+                                                            isActive ? { backgroundColor: DARK } : (isMax && s.barFillActive),
+                                                        ]}
+                                                    />
+                                                </View>
+                                                <Text style={[s.barLabel, (isMax || isActive) && s.barLabelActive]} numberOfLines={1}>
+                                                    {week.label}
+                                                </Text>
+                                            </Pressable>
+                                        );
+                                    })}
+                                </View>
+                            </ScrollView>
                         )}
                     </View>
 
@@ -559,6 +589,22 @@ export default function AnalyticsScreen({ onBack, onNavigate, onReportPreview, o
                         <Pressable style={s.applyButton} onPress={handleApplyFilter}>
                             <Text style={s.applyButtonText}>Apply Filter</Text>
                         </Pressable>
+                        <Pressable
+                            style={s.clearAllButton}
+                            onPress={() => {
+                                setPendingTimeframe('month');
+                                setCustomStart(null);
+                                setCustomEnd(null);
+                                setAppliedStart(null);
+                                setAppliedEnd(null);
+                                setTimeframe('month');
+                                setSelectedCategories([]);
+                                setSelectedPaymentMethods([]);
+                                setFilterVisible(false);
+                            }}
+                        >
+                            <Text style={s.clearAllButtonText}>Clear Filters</Text>
+                        </Pressable>
                     </View>
                 </View>
             </Modal>
@@ -569,46 +615,70 @@ export default function AnalyticsScreen({ onBack, onNavigate, onReportPreview, o
                 animationType="slide"
                 onRequestClose={() => setCatModalVisible(false)}
             >
-                <View style={s.modalOverlay}>
-                    <View style={s.modalContent}>
+                <Pressable style={s.modalOverlay} onPress={() => setCatModalVisible(false)}>
+                    <Pressable style={s.modalContent} onPress={e => e.stopPropagation?.()}>
                         <View style={s.modalDragHandle} />
 
                         <View style={s.modalHeader}>
                             <Text style={s.modalTitle}>Filter by Category</Text>
-                            <Text style={s.modalSubtitle}>View analytics for a specific category</Text>
+                            <Text style={s.modalSubtitle}>Long-press to select multiple categories</Text>
                         </View>
 
                         <ScrollView style={{ maxHeight: Dimensions.get('window').height * 0.5 }}>
                             <Pressable
-                                style={[s.catFilterRow, categoryId === null && s.radioOptionActive]}
-                                onPress={() => { setCategoryId(null); setCatModalVisible(false); }}
+                                style={[s.catFilterRow, pendingCategories.length === 0 && s.radioOptionActive]}
+                                onPress={() => { setPendingCategories([]); setSelectedCategories([]); setCatModalVisible(false); }}
                             >
                                 <Text style={s.radioTitle}>All Categories</Text>
-                                <MaterialCommunityIcons name={categoryId === null ? "check-circle" : "circle-outline"} size={22} color={categoryId === null ? ACCENT : MUTED} />
+                                <MaterialCommunityIcons name={pendingCategories.length === 0 ? "check-circle" : "circle-outline"} size={22} color={pendingCategories.length === 0 ? ACCENT : MUTED} />
                             </Pressable>
 
-                            {categories.map(cat => (
-                                <Pressable
-                                    key={cat.id}
-                                    style={[s.catFilterRow, categoryId === cat.id && s.radioOptionActive]}
-                                    onPress={() => { setCategoryId(cat.id); setCatModalVisible(false); }}
-                                >
-                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                                        <View style={[s.statIconBg, { backgroundColor: cat.color || ICON_BG }]}>
-                                            <MaterialCommunityIcons
-                                                name={cat.icon_name}
-                                                size={16}
-                                                color={getContrastIconColor(cat.color || ICON_BG)}
-                                            />
+                            {categories.map(cat => {
+                                const isSelected = pendingCategories.includes(cat.id);
+                                return (
+                                    <Pressable
+                                        key={cat.id}
+                                        style={[s.catFilterRow, isSelected && s.radioOptionActive]}
+                                        onPress={() => {
+                                            if (isSelected) {
+                                                setPendingCategories(prev => prev.filter(id => id !== cat.id));
+                                            } else {
+                                                setPendingCategories(prev => [...prev, cat.id]);
+                                            }
+                                        }}
+                                    >
+                                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                                            <View style={[s.statIconBg, { backgroundColor: cat.color || ICON_BG }]}>
+                                                <MaterialCommunityIcons
+                                                    name={cat.icon_name}
+                                                    size={16}
+                                                    color={getContrastIconColor(cat.color || ICON_BG)}
+                                                />
+                                            </View>
+                                            <Text style={s.radioTitle}>{cat.name}</Text>
                                         </View>
-                                        <Text style={s.radioTitle}>{cat.name}</Text>
-                                    </View>
-                                    <MaterialCommunityIcons name={categoryId === cat.id ? "check-circle" : "circle-outline"} size={22} color={categoryId === cat.id ? ACCENT : MUTED} />
-                                </Pressable>
-                            ))}
+                                        <MaterialCommunityIcons
+                                            name={isSelected ? "check-circle" : "circle-outline"}
+                                            size={22}
+                                            color={isSelected ? ACCENT : MUTED}
+                                        />
+                                    </Pressable>
+                                );
+                            })}
                         </ScrollView>
-                    </View>
-                </View>
+                        <View style={s.modalFooterRelative}>
+                            <Pressable
+                                style={s.applyButton}
+                                onPress={() => {
+                                    setSelectedCategories([...pendingCategories]);
+                                    setCatModalVisible(false);
+                                }}
+                            >
+                                <Text style={s.applyButtonText}>Apply Filter</Text>
+                            </Pressable>
+                        </View>
+                    </Pressable>
+                </Pressable>
             </Modal>
 
             {/* Payment Method Filter Modal */}
@@ -618,19 +688,19 @@ export default function AnalyticsScreen({ onBack, onNavigate, onReportPreview, o
                 animationType="slide"
                 onRequestClose={() => setPmModalVisible(false)}
             >
-                <View style={s.modalOverlay}>
-                    <View style={s.modalContent}>
+                <Pressable style={s.modalOverlay} onPress={() => setPmModalVisible(false)}>
+                    <Pressable style={s.modalContent} onPress={e => e.stopPropagation?.()}>
                         <View style={s.modalDragHandle} />
 
                         <View style={s.modalHeader}>
                             <Text style={s.modalTitle}>Filter by Payment Method</Text>
-                            <Text style={s.modalSubtitle}>View analytics for a specific payment method</Text>
+                            <Text style={s.modalSubtitle}>Long-press to select multiple payment methods</Text>
                         </View>
 
                         <ScrollView style={{ maxHeight: Dimensions.get('window').height * 0.5 }}>
                             <Pressable
-                                style={[s.catFilterRow, paymentMethod === null && s.radioOptionActive]}
-                                onPress={() => { setPaymentMethod(null); setPmModalVisible(false); }}
+                                style={[s.catFilterRow, pendingPaymentMethods.length === 0 && s.radioOptionActive]}
+                                onPress={() => { setPendingPaymentMethods([]); setSelectedPaymentMethods([]); setPmModalVisible(false); }}
                             >
                                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                                     <View style={[s.statIconBg, { backgroundColor: ICON_BG }]}>
@@ -638,27 +708,51 @@ export default function AnalyticsScreen({ onBack, onNavigate, onReportPreview, o
                                     </View>
                                     <Text style={s.radioTitle}>All Methods</Text>
                                 </View>
-                                <MaterialCommunityIcons name={paymentMethod === null ? "check-circle" : "circle-outline"} size={22} color={paymentMethod === null ? ACCENT : MUTED} />
+                                <MaterialCommunityIcons name={pendingPaymentMethods.length === 0 ? "check-circle" : "circle-outline"} size={22} color={pendingPaymentMethods.length === 0 ? ACCENT : MUTED} />
                             </Pressable>
 
-                            {PAYMENT_METHODS.map(pm => (
-                                <Pressable
-                                    key={pm.id}
-                                    style={[s.catFilterRow, paymentMethod === pm.id && s.radioOptionActive]}
-                                    onPress={() => { setPaymentMethod(pm.id); setPmModalVisible(false); }}
-                                >
-                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                                        <View style={[s.statIconBg, { backgroundColor: paymentMethod === pm.id ? ACCENT + '22' : ICON_BG }]}>
-                                            <MaterialCommunityIcons name={pm.icon} size={16} color={paymentMethod === pm.id ? ACCENT : DARK} />
+                            {PAYMENT_METHODS.map(pm => {
+                                const isSelected = pendingPaymentMethods.includes(pm.id);
+                                return (
+                                    <Pressable
+                                        key={pm.id}
+                                        style={[s.catFilterRow, isSelected && s.radioOptionActive]}
+                                        onPress={() => {
+                                            if (isSelected) {
+                                                setPendingPaymentMethods(prev => prev.filter(id => id !== pm.id));
+                                            } else {
+                                                setPendingPaymentMethods(prev => [...prev, pm.id]);
+                                            }
+                                        }}
+                                    >
+                                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                                            <View style={[s.statIconBg, { backgroundColor: isSelected ? ACCENT + '22' : ICON_BG }]}>
+                                                <MaterialCommunityIcons name={pm.icon} size={16} color={isSelected ? ACCENT : DARK} />
+                                            </View>
+                                            <Text style={s.radioTitle}>{pm.label}</Text>
                                         </View>
-                                        <Text style={s.radioTitle}>{pm.label}</Text>
-                                    </View>
-                                    <MaterialCommunityIcons name={paymentMethod === pm.id ? "check-circle" : "circle-outline"} size={22} color={paymentMethod === pm.id ? ACCENT : MUTED} />
-                                </Pressable>
-                            ))}
+                                        <MaterialCommunityIcons
+                                            name={isSelected ? "check-circle" : "circle-outline"}
+                                            size={22}
+                                            color={isSelected ? ACCENT : MUTED}
+                                        />
+                                    </Pressable>
+                                );
+                            })}
                         </ScrollView>
-                    </View>
-                </View>
+                        <View style={s.modalFooterRelative}>
+                            <Pressable
+                                style={s.applyButton}
+                                onPress={() => {
+                                    setSelectedPaymentMethods([...pendingPaymentMethods]);
+                                    setPmModalVisible(false);
+                                }}
+                            >
+                                <Text style={s.applyButtonText}>Apply Filter</Text>
+                            </Pressable>
+                        </View>
+                    </Pressable>
+                </Pressable>
             </Modal>
 
             {/* Category Transactions Drill-down Modal */}
@@ -723,18 +817,22 @@ export default function AnalyticsScreen({ onBack, onNavigate, onReportPreview, o
     );
 }
 
-const getStyles = (colors, ACCENT, BG, CARD_BG, DARK, MUTED) => StyleSheet.create({
+const getStyles = (colors, insets, ACCENT, BG, CARD_BG, DARK, MUTED) => StyleSheet.create({
     container: { flex: 1, backgroundColor: BG },
-    scroll: { paddingHorizontal: 20, paddingTop: 60, paddingBottom: 100 },
+    scroll: { 
+        paddingHorizontal: 20, 
+        paddingTop: Math.max(insets?.top || 60, 20), 
+        paddingBottom: Math.max(insets?.bottom || 0, 100) 
+    },
 
     // Header
     headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 },
     headerTitle: { fontSize: 18, fontWeight: '700', color: DARK },
 
     // Filters
-    filterRow: { flexDirection: 'row', gap: 8, marginBottom: 20, alignItems: 'center' },
-    filterChip: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: CARD_BG, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 8 },
-    filterChipText: { fontSize: 13, fontWeight: '500', color: DARK },
+    filterRow: { flexDirection: 'row', gap: 10, alignItems: 'center' },
+    filterChip: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.backgroundPrimary === '#121212' ? '#1E1E1E' : '#FFFFFF', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 },
+    filterChipText: { fontSize: 13, fontWeight: '600', color: DARK },
     allAccountsChip: { backgroundColor: ACCENT, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8 },
     allAccountsText: { fontSize: 13, fontWeight: '600', color: '#FFF' },
 
@@ -759,7 +857,7 @@ const getStyles = (colors, ACCENT, BG, CARD_BG, DARK, MUTED) => StyleSheet.creat
     barCol: { flex: 1, alignItems: 'center', gap: 8 },
     barTooltip: { backgroundColor: DARK, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 4, marginBottom: 4 },
     barTooltipText: { color: '#fff', fontSize: 11, fontWeight: '600' },
-    barTrack: { width: 36, height: 100, backgroundColor: colors.progressTrack, borderRadius: 10, justifyContent: 'flex-end', overflow: 'hidden' },
+    barTrack: { width: 32, height: 100, backgroundColor: colors.progressTrack, borderRadius: 10, justifyContent: 'flex-end', overflow: 'hidden' },
     barFill: { width: '100%', backgroundColor: colors.outlinedBorder, borderRadius: 10 },
     barFillActive: { backgroundColor: ACCENT },
     barLabel: { fontSize: 12, color: MUTED, fontWeight: '500' },
@@ -797,9 +895,9 @@ const getStyles = (colors, ACCENT, BG, CARD_BG, DARK, MUTED) => StyleSheet.creat
 
     // Date Range Modal Styles
     fullModalContainer: { flex: 1, backgroundColor: colors.backgroundPrimary },
-    fullModalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 50, paddingBottom: 20 },
+    fullModalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: Math.max(insets?.top || 50, 20), paddingBottom: 20 },
     fullModalTitle: { fontSize: 18, fontWeight: 'bold', color: DARK },
-    fullModalScroll: { paddingHorizontal: 20, paddingBottom: 100 },
+    fullModalScroll: { paddingHorizontal: 20, paddingBottom: Math.max(insets?.bottom || 0, 40) },
     radioGroupDate: { gap: 12, marginBottom: 32, marginTop: 10 },
     radioOptionFull: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: colors.backgroundCard, padding: 20, borderRadius: 20 },
     radioTitleFull: { fontSize: 15, fontWeight: '600', color: DARK },
@@ -812,7 +910,8 @@ const getStyles = (colors, ACCENT, BG, CARD_BG, DARK, MUTED) => StyleSheet.creat
 
     customRangeTitle: { fontSize: 16, fontWeight: '700', color: DARK, marginBottom: 16, marginTop: 10 },
 
-    modalFooter: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 24, paddingBottom: 40, backgroundColor: colors.backgroundPrimary },
+    modalFooter: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 24, paddingBottom: Math.max(insets?.bottom || 0, 40), backgroundColor: colors.backgroundPrimary },
+    modalFooterRelative: { paddingVertical: 16 },
     applyButton: { backgroundColor: DARK, borderRadius: 20, height: 60, alignItems: 'center', justifyContent: 'center' },
     applyButtonText: { color: colors.backgroundPrimary, fontSize: 16, fontWeight: '600' },
 

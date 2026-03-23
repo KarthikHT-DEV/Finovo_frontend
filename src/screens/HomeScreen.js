@@ -8,6 +8,7 @@ import {
     Animated,
     Image,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Svg, { Circle, G } from 'react-native-svg';
 
@@ -103,7 +104,8 @@ const DonutChart = ({ data, savedPercentage, colors, styles }) => {
 
 export default function HomeScreen({ onNavigate, onEditTransaction }) {
     const { colors, formatCurrency, currency } = useTheme();
-    const styles = React.useMemo(() => getStyles(colors), [colors]);
+    const insets = useSafeAreaInsets();
+    const styles = React.useMemo(() => getStyles(colors, insets), [colors, insets]);
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isBalanceVisible, setIsBalanceVisible] = useState(false);
@@ -153,13 +155,13 @@ export default function HomeScreen({ onNavigate, onEditTransaction }) {
                         <View style={styles.headerLeft}>
                             <Pressable style={styles.miniAvatarWrapper} onPress={() => onNavigate('account_settings')}>
                                 {data.avatar_url ? (
-                                    <Image 
-                                        source={{ 
-                                            uri: data.avatar_url.startsWith('http') 
-                                                ? data.avatar_url 
-                                                : `${MEDIA_BASE_URL}${data.avatar_url}` 
-                                        }} 
-                                        style={styles.miniAvatarImage} 
+                                    <Image
+                                        source={{
+                                            uri: data.avatar_url.startsWith('http')
+                                                ? data.avatar_url
+                                                : `${MEDIA_BASE_URL}${data.avatar_url}`
+                                        }}
+                                        style={styles.miniAvatarImage}
                                     />
                                 ) : (
                                     <Text style={styles.miniAvatarInitials}>

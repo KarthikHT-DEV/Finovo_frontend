@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { BackHandler } from 'react-native';
+import { BackHandler, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import * as ScreenCapture from 'expo-screen-capture';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import SplashScreen from './src/screens/SplashScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
@@ -23,15 +24,19 @@ import TransactionInfoScreen from './src/screens/TransactionInfoScreen';
 import NotificationSettingsScreen from './src/screens/NotificationSettingsScreen';
 import PrivacyPolicyScreen from './src/screens/PrivacyPolicyScreen';
 import DataExportScreen from './src/screens/DataExportScreen';
+import OTPScreen from './src/screens/OTPScreen';
+import VerifyEmailScreen from './src/screens/VerifyEmailScreen';
+import ForgotPasswordScreen from './src/screens/ForgotPasswordScreen';
+import ResetPasswordScreen from './src/screens/ResetPasswordScreen';
 import { setAuthToken } from './src/services/apiClient';
 import transactionService from './src/services/transactionService';
 import { ThemeProvider, useTheme } from './src/styles/theme';
+import { AlertProvider, useAlert } from './src/contexts/AlertContext';
 
 function ThemedStatusBar() {
   const { isDark, colors } = useTheme();
   return <StatusBar style={isDark ? "light" : "dark"} backgroundColor={colors.backgroundPrimary} />;
 }
-
 
 const SCREENS = {
   SPLASH: 'splash',
@@ -53,24 +58,42 @@ const SCREENS = {
   NOTIFICATION_SETTINGS: 'notification_settings',
   PRIVACY_POLICY: 'privacy_policy',
   DATA: 'data',
+  ACCEPT_PRIVACY: 'accept_privacy',
+  OTP: 'otp',
+  VERIFY_EMAIL: 'verify_email',
+  FORGOT_PASSWORD: 'forgot_password',
+  RESET_PASSWORD: 'reset_password',
 };
 
 export default function App() {
+  return (
+    <SafeAreaProvider>
+      <ThemeProvider>
+        <AlertProvider>
+          <AppContent />
+        </AlertProvider>
+      </ThemeProvider>
+    </SafeAreaProvider>
+  );
+}
+
+function AppContent() {
+  const { colors } = useTheme();
   const [screen, setScreen] = useState(SCREENS.SPLASH);
   const [history, setHistory] = useState([]);
   const [authData, setAuthData] = useState(null);
-  const [lastTransaction, setLastTransaction] = useState(null);  // passed to success screen
-  const [transactionToEdit, setTransactionToEdit] = useState(null); // passed to edit screen
+  const [lastTransaction, setLastTransaction] = useState(null);
+  const [transactionToEdit, setTransactionToEdit] = useState(null);
   const [reportData, setReportData] = useState(null);
   const [selectedNotification, setSelectedNotification] = useState(null);
+  const [pendingRegistration, setPendingRegistration] = useState(null);
+  const [resetEmail, setResetEmail] = useState('');
 
   useEffect(() => {
-    // Allow screenshots globally for all screens (including password fields on Android)
     let subscription;
     const enableCapture = async () => {
       await ScreenCapture.allowScreenCaptureAsync();
-      // Also use the subscription-based approach so it persists
-      subscription = ScreenCapture.addScreenshotListener(() => {});
+      subscription = ScreenCapture.addScreenshotListener(() => { });
     };
     enableCapture();
     return () => subscription?.remove?.();
@@ -78,7 +101,6 @@ export default function App() {
 
   const navigate = useCallback((target, clearHistory = false) => {
     setScreen((prevScreen) => {
-      // Prevent duplicate consecutive entries
       if (prevScreen !== target) {
         if (clearHistory) {
           setHistory([]);
@@ -90,19 +112,15 @@ export default function App() {
     });
   }, []);
 
-  // Handle Android hardware back button
   useEffect(() => {
     const onBackPress = () => {
-      // If we are at root-level screens, let it exit
       if ([SCREENS.HOME, SCREENS.WELCOME, SCREENS.ONBOARDING, SCREENS.SPLASH].includes(screen)) {
         return false;
       }
-      // If we are on login/register, go to welcome
       if (screen === SCREENS.LOGIN || screen === SCREENS.REGISTER) {
         navigate(SCREENS.WELCOME);
         return true;
       }
-      // If we have history, pop to previous
       if (history.length > 0) {
         setHistory((prev) => {
           const newHist = [...prev];
@@ -110,16 +128,14 @@ export default function App() {
           setScreen(prevScreen);
           return newHist;
         });
-        return true; // We handled it
+        return true;
       }
       return false;
     };
-
     const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
     return () => subscription.remove();
-  }, [screen, history]);
+  }, [screen, history, navigate]);
 
-  /** Shared BottomNav / tab router */
   const handleTabNav = (tab) => {
     switch (tab) {
       case 'home': navigate(SCREENS.HOME); break;
@@ -129,30 +145,54 @@ export default function App() {
       case 'notifications': navigate(SCREENS.NOTIFICATIONS); break;
       case 'set_budget': navigate(SCREENS.SET_BUDGET); break;
       case 'account_settings': navigate(SCREENS.ACCOUNT_SETTINGS); break;
+      case 'verify_email': navigate(SCREENS.VERIFY_EMAIL); break;
       case 'data': navigate(SCREENS.DATA); break;
       default: break;
     }
   };
 
+  const { showAlert } = useAlert();
+
   const handleAuthSuccess = (data) => {
     setAuthData(data);
     setAuthToken(data.access);
-    navigate(SCREENS.HOME, true); // true = clear history
+
+    if (!data.user.is_verified) {
+      showAlert(
+        "Verify Email",
+        "Your email is not verified. Some features may be limited.",
+        {
+          confirmText: "Verify Now",
+          onConfirm: async () => {
+            try {
+              await authService.sendOTP(data.user.email);
+              navigate(SCREENS.VERIFY_EMAIL);
+            } catch (e) {
+              showAlert("Error", "Failed to send verification code.");
+            }
+          },
+          cancelText: "Later",
+          onCancel: () => navigate(data.is_new_user ? SCREENS.ACCEPT_PRIVACY : SCREENS.HOME, true)
+        }
+      );
+    } else if (data.is_new_user) {
+      navigate(SCREENS.ACCEPT_PRIVACY, true);
+    } else {
+      navigate(SCREENS.HOME, true);
+    }
   };
 
   const handleLogout = () => {
     setAuthData(null);
     setAuthToken(null);
-    navigate(SCREENS.WELCOME, true); // true = clear history
+    navigate(SCREENS.WELCOME, true);
   };
 
-  /** Called by AddTransactionScreen after a successful save */
   const handleSaveSuccess = (transaction) => {
     setLastTransaction(transaction);
     navigate(SCREENS.TRANSACTION_SUCCESS);
   };
 
-  /** Called by HomeScreen when a transaction is pressed */
   const handleEditTransaction = (transaction) => {
     setTransactionToEdit(transaction);
     navigate(SCREENS.EDIT_TRANSACTION);
@@ -167,7 +207,6 @@ export default function App() {
         category_id: txnData.category ? txnData.category.id : null,
       };
       if (!payload.category_id) delete payload.category_id;
-
       const res = await transactionService.createTransaction(payload);
       setLastTransaction(res);
       navigate(SCREENS.TRANSACTION_SUCCESS);
@@ -189,13 +228,16 @@ export default function App() {
     }
   }, [history, navigate]);
 
+  const handleSplashComplete = useCallback(() => {
+    navigate(SCREENS.ONBOARDING);
+  }, [navigate]);
+
   return (
-    <ThemeProvider>
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <ThemedStatusBar />
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.backgroundPrimary }}>
+      <ThemedStatusBar />
 
       {screen === SCREENS.SPLASH && (
-        <SplashScreen onComplete={() => navigate(SCREENS.ONBOARDING)} />
+        <SplashScreen onComplete={handleSplashComplete} />
       )}
 
       {screen === SCREENS.ONBOARDING && (
@@ -214,6 +256,7 @@ export default function App() {
           onBack={() => navigate(SCREENS.WELCOME)}
           onLoginSuccess={handleAuthSuccess}
           onSignUpPress={() => navigate(SCREENS.REGISTER)}
+          onForgotPassword={() => navigate(SCREENS.FORGOT_PASSWORD)}
         />
       )}
 
@@ -221,7 +264,67 @@ export default function App() {
         <RegisterScreen
           onBack={() => navigate(SCREENS.WELCOME)}
           onSignInPress={() => navigate(SCREENS.LOGIN)}
-          onRegisterSuccess={handleAuthSuccess}
+          onRegisterSuccess={(data) => {
+            showAlert(
+              "Registration Successful",
+              "Your account has been created. You can verify your email later from Account Settings to unlock all features.",
+              {
+                onConfirm: () => navigate(SCREENS.LOGIN)
+              }
+            );
+          }}
+        />
+      )}
+
+      {screen === SCREENS.OTP && (
+        <OTPScreen
+          email={pendingRegistration?.user?.email || ""}
+          onVerifySuccess={() => {
+            if (pendingRegistration) {
+              setAuthData(pendingRegistration);
+              setAuthToken(pendingRegistration.access);
+              setPendingRegistration(null);
+              navigate(SCREENS.ACCEPT_PRIVACY, true);
+            }
+          }}
+          onBack={() => navigate(SCREENS.REGISTER)}
+        />
+      )}
+
+      {screen === SCREENS.VERIFY_EMAIL && (
+        <VerifyEmailScreen
+          email={authData?.user?.email || ""}
+          onVerifySuccess={() => {
+            showAlert("Success", "Your email has been verified!");
+            setAuthData({ ...authData, user: { ...authData.user, is_verified: true } });
+            navigate(SCREENS.HOME, true);
+          }}
+          onBack={() => navigate(SCREENS.ACCOUNT_SETTINGS)}
+        />
+      )}
+
+      {screen === SCREENS.FORGOT_PASSWORD && (
+        <ForgotPasswordScreen
+          onBack={() => navigate(SCREENS.LOGIN)}
+          onSuccess={(email) => {
+            setResetEmail(email);
+            navigate(SCREENS.RESET_PASSWORD);
+          }}
+        />
+      )}
+
+      {screen === SCREENS.RESET_PASSWORD && (
+        <ResetPasswordScreen
+          email={resetEmail}
+          onBack={() => navigate(SCREENS.FORGOT_PASSWORD)}
+          onSuccess={() => navigate(SCREENS.LOGIN, true)}
+        />
+      )}
+
+      {screen === SCREENS.ACCEPT_PRIVACY && (
+        <PrivacyPolicyScreen
+          isAcceptanceMode
+          onAccept={() => navigate(SCREENS.HOME, true)}
         />
       )}
 
@@ -351,6 +454,5 @@ export default function App() {
         />
       )}
     </GestureHandlerRootView>
-    </ThemeProvider>
   );
 }

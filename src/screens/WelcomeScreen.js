@@ -63,7 +63,11 @@ export default function WelcomeScreen({ onCreateAccount, onSignIn }) {
             >
                 <View style={styles.brandRow}>
                     <View style={styles.iconBox}>
-                        <MaterialCommunityIcons name="wallet" size={20} color={colors.backgroundPrimary} />
+                        <Image 
+                            source={require('../../assets/app-icon.png')} 
+                            style={{ width: '100%', height: '100%', borderRadius: 8 }}
+                            resizeMode="contain"
+                        />
                     </View>
                 </View>
 

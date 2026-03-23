@@ -2,15 +2,15 @@ import { StyleSheet } from 'react-native';
 
 import Typography from './typography';
 
-export const getStyles = (Colors) => StyleSheet.create({
+export const getStyles = (Colors, insets) => StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: Colors.backgroundPrimary,
     },
     scrollContent: {
         paddingHorizontal: 20,
-        paddingTop: 60,
-        paddingBottom: 100, // Make room for floating bottom nav
+        paddingTop: Math.max(insets?.top || 60, 20),
+        paddingBottom: Math.max(insets?.bottom || 0, 100), // Make room for floating bottom nav
     },
 
     // Header

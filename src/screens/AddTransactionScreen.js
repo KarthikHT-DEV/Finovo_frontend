@@ -13,6 +13,7 @@ import {
     Modal,
     Keyboard,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import transactionService from '../services/transactionService';
@@ -22,7 +23,8 @@ import CalendarRangePicker from '../components/CalendarRangePicker';
 
 export default function AddTransactionScreen({ onCancel, onSaveSuccess }) {
     const { colors, currency } = useTheme();
-    const styles = React.useMemo(() => getStyles(colors), [colors]);
+    const insets = useSafeAreaInsets();
+    const styles = React.useMemo(() => getStyles(colors, insets), [colors, insets]);
     const [type, setType] = useState('EXPENSE'); // 'INCOME' or 'EXPENSE'
     const [amount, setAmount] = useState('');
     const [description, setDescription] = useState('');
@@ -167,13 +169,14 @@ export default function AddTransactionScreen({ onCancel, onSaveSuccess }) {
     return (
         <KeyboardAvoidingView
             style={styles.container}
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 24}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
         >
             <ScrollView
                 contentContainerStyle={[
                     styles.scrollContent,
-                    keyboardVisible && { paddingBottom: 250 }
+                    { flexGrow: 1 },
+                    keyboardVisible && { paddingBottom: 150 }
                 ]}
                 keyboardShouldPersistTaps="handled"
                 showsVerticalScrollIndicator={false}

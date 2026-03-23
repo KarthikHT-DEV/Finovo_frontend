@@ -138,10 +138,14 @@ export default function SetBudgetScreen({ onBack, onNavigate }) {
 
             <KeyboardAvoidingView
                 style={{ flex: 1 }}
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
+                keyboardVerticalOffset={0}
             >
                 <Animated.ScrollView
-                    contentContainerStyle={s.scroll}
+                    contentContainerStyle={[
+                        s.scroll,
+                        { paddingBottom: 80 } // Always add extra padding in budget screen since it's a long list
+                    ]}
                     showsVerticalScrollIndicator={false}
                     style={{ opacity: fadeAnim }}
                     keyboardShouldPersistTaps="handled"
@@ -327,5 +331,5 @@ const getStyles = (colors, BG, CARD, DARK, MUTED, BORDER, ACCENT, RED) => StyleS
         shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.15, shadowRadius: 8, elevation: 4,
     },
-    saveBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+    saveBtnText: { color: colors.backgroundPrimary, fontSize: 16, fontWeight: '700' },
 });

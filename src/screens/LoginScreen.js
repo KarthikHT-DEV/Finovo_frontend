@@ -9,11 +9,13 @@ import {
     Text,
     View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { FormInput } from '../components/FormInput';
+import { useTheme } from '../styles/theme';
+import { useAlert } from '../contexts/AlertContext';
 import authService from '../services/authService';
 import getLoginStyles from '../styles/LoginScreen.styles';
-import { useTheme } from '../styles/theme';
 
 // ─── Animation config ─────────────────────────────────────────────────────────
 const EASING_ENTER = Easing.out(Easing.cubic);
@@ -26,9 +28,11 @@ const EASING_ENTER = Easing.out(Easing.cubic);
  *
  * @param {{ onBack: () => void, onLoginSuccess: (data: object) => void, onSignUpPress: () => void }} props
  */
-export default function LoginScreen({ onBack, onLoginSuccess, onSignUpPress }) {
+export default function LoginScreen({ onBack, onLoginSuccess, onSignUpPress, onForgotPassword }) {
     const { colors } = useTheme();
-    const styles = React.useMemo(() => getLoginStyles(colors), [colors]);
+    const { showAlert } = useAlert();
+    const insets = useSafeAreaInsets();
+    const styles = React.useMemo(() => getLoginStyles(colors, insets), [colors, insets]);
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -130,7 +134,7 @@ export default function LoginScreen({ onBack, onLoginSuccess, onSignUpPress }) {
     // ── Submit handler ────────────────────────────────────────────────────────
     const handleSignIn = useCallback(async () => {
         if (!email.trim() || !password.trim()) {
-            setError('Please enter your email and password.');
+            showAlert('Login Error', 'Please enter your email and password.');
             return;
         }
 
@@ -141,10 +145,13 @@ export default function LoginScreen({ onBack, onLoginSuccess, onSignUpPress }) {
             const data = await authService.login(email.trim(), password);
             onLoginSuccess?.(data);
         } catch (err) {
+            const serverError = err.response?.data;
             const message =
+                serverError?.error ||
+                serverError?.detail ||
                 err.message ||
-                (err.response?.data?.error ?? 'Something went wrong. Please try again.');
-            setError(message);
+                'Something went wrong. Please try again.';
+            showAlert('Login Error', message);
         } finally {
             setLoading(false);
         }
@@ -154,7 +161,7 @@ export default function LoginScreen({ onBack, onLoginSuccess, onSignUpPress }) {
     return (
         <KeyboardAvoidingView
             style={styles.container}
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
             {/* ── Header ── */}
             <Animated.View
@@ -168,10 +175,13 @@ export default function LoginScreen({ onBack, onLoginSuccess, onSignUpPress }) {
                     },
                 ]}
             >
-                <Pressable style={styles.headerBackButton} onPress={onBack} hitSlop={12}>
-                    <MaterialCommunityIcons name="arrow-left" size={22} color={colors.textPrimary} />
-                </Pressable>
-                <Text style={styles.headerTitle}>Finovo</Text>
+                <View style={{ width: 40, alignItems: 'flex-start' }}>
+                    <Pressable onPress={onBack} hitSlop={12}>
+                        <MaterialCommunityIcons name="arrow-left" size={26} color={colors.textPrimary} />
+                    </Pressable>
+                </View>
+                <Text style={[styles.headerTitle, { flex: 1, textAlign: 'center', fontSize: 22 }]}>Finovo</Text>
+                <View style={{ width: 40 }} />
             </Animated.View>
 
             <ScrollView
@@ -212,14 +222,14 @@ export default function LoginScreen({ onBack, onLoginSuccess, onSignUpPress }) {
                         placeholder="••••••••"
                         isPassword
                         rightLabel="Forgot?"
-                        onRightLabelPress={() => {/* TODO: navigate to ForgotPassword */ }}
+                        onRightLabelPress={onForgotPassword}
                         value={password}
                         onChangeText={setPassword}
                     />
                 </Animated.View>
 
-                {/* ── Error message ── */}
-                {error ? <Text style={styles.errorText}>{error}</Text> : null}
+                {/* Error message (fallback for inline if needed, but we use showAlert) */}
+                {/* {error ? <Text style={styles.errorText}>{error}</Text> : null} */}
 
                 {/* ── Sign In button ── */}
                 <Animated.View

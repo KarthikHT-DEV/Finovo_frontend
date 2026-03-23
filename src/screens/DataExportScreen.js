@@ -27,17 +27,17 @@ export default function DataExportScreen({ onBack, onNavigate }) {
             setIsLoading(true);
             setLoadingMessage('Generating file...');
             const data = await transactionService.exportTransactions(format);
-            
+
             const reader = new FileReader();
             reader.onload = async () => {
                 const base64 = reader.result.split(',')[1];
                 const filename = `finovo_transactions_${new Date().getTime()}.${format}`;
                 const fileUri = FileSystem.documentDirectory + filename;
-                
+
                 await FileSystem.writeAsStringAsync(fileUri, base64, {
                     encoding: FileSystem.EncodingType.Base64,
                 });
-                
+
                 if (await Sharing.isAvailableAsync()) {
                     await Sharing.shareAsync(fileUri);
                 } else {
@@ -58,7 +58,7 @@ export default function DataExportScreen({ onBack, onNavigate }) {
         try {
             const result = await DocumentPicker.getDocumentAsync({
                 type: [
-                    'text/comma-separated-values', 
+                    'text/comma-separated-values',
                     'text/csv',
                     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
                 ],
@@ -92,9 +92,9 @@ export default function DataExportScreen({ onBack, onNavigate }) {
             "Are you sure you want to permanently delete all your transaction history? This action cannot be undone.",
             [
                 { text: "Cancel", style: "cancel" },
-                { 
-                    text: "Delete", 
-                    style: "destructive", 
+                {
+                    text: "Delete",
+                    style: "destructive",
                     onPress: async () => {
                         try {
                             await transactionService.cleanupData();
@@ -125,7 +125,7 @@ export default function DataExportScreen({ onBack, onNavigate }) {
                 {/* Export Options */}
                 <Text style={s.sectionLabel}>EXPORT OPTIONS</Text>
                 <View style={s.card}>
-                    <DataRow 
+                    <DataRow
                         icon="file-export-outline"
                         title="Export as CSV"
                         subtitle="Best for simple spreadsheets"
@@ -133,7 +133,7 @@ export default function DataExportScreen({ onBack, onNavigate }) {
                         onPress={() => handleExport('csv')}
                         colors={colors}
                     />
-                    <DataRow 
+                    <DataRow
                         icon="file-excel-outline"
                         title="Export as Excel"
                         subtitle="Best for detailed analysis"
@@ -147,7 +147,7 @@ export default function DataExportScreen({ onBack, onNavigate }) {
                 {/* Import Options */}
                 <Text style={s.sectionLabel}>IMPORT OPTIONS</Text>
                 <View style={s.card}>
-                    <DataRow 
+                    <DataRow
                         icon="file-import-outline"
                         title="Import Previous Data"
                         subtitle="Upload your CSV or XLSX file"
@@ -196,8 +196,8 @@ const DataRow = ({ icon, title, subtitle, btnLabel, onPress, colors, isLast, isI
             <Text style={[styles.rowTitle, { color: colors.textPrimary }]}>{title}</Text>
             <Text style={[styles.rowSubtitle, { color: colors.textSecondary }]}>{subtitle}</Text>
         </View>
-        <Pressable 
-            style={[styles.actionBtn, isImport && { backgroundColor: '#0EA5E9' }]} 
+        <Pressable
+            style={[styles.actionBtn, isImport && { backgroundColor: '#0EA5E9' }]}
             onPress={onPress}
         >
             <Text style={styles.actionBtnText}>{btnLabel}</Text>
@@ -207,13 +207,13 @@ const DataRow = ({ icon, title, subtitle, btnLabel, onPress, colors, isLast, isI
 
 const getStyles = (colors) => StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.backgroundPrimary },
-    header: { 
-        flexDirection: 'row', 
-        alignItems: 'center', 
-        justifyContent: 'space-between', 
-        marginTop: 60, 
-        paddingHorizontal: 20, 
-        paddingBottom: 16 
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginTop: 60,
+        paddingHorizontal: 20,
+        paddingBottom: 16
     },
     headerTitle: { fontSize: 18, fontWeight: '700', color: colors.textPrimary },
     scroll: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 100 },

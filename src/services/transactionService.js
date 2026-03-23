@@ -53,7 +53,20 @@ const deleteTransaction = async (id) => {
 const getTransactions = async (filters = {}) => {
     let url = '/transactions/';
     const params = [];
-    if (filters.categoryId) params.push(`category_id=${filters.categoryId}`);
+    if (filters.categoryId) {
+        if (Array.isArray(filters.categoryId)) {
+           if (filters.categoryId.length > 0) params.push(`category_id=${filters.categoryId.join(',')}`);
+        } else {
+           params.push(`category_id=${filters.categoryId}`);
+        }
+    }
+    if (filters.paymentMethods) {
+        if (Array.isArray(filters.paymentMethods)) {
+           if (filters.paymentMethods.length > 0) params.push(`payment_method=${filters.paymentMethods.join(',')}`);
+        } else {
+           params.push(`payment_method=${filters.paymentMethods}`);
+        }
+    }
     if (filters.startDate) params.push(`start_date=${filters.startDate}`);
     if (filters.endDate) params.push(`end_date=${filters.endDate}`);
 

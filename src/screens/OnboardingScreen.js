@@ -210,9 +210,10 @@ export default function OnboardingScreen({ onComplete }) {
                         { opacity: headerOpacity, transform: [{ translateY: headerTranslateY }] },
                     ]}
                 >
+                    <View style={{ width: 60 }} />
                     <Text style={styles.headerLogo}>Finovo</Text>
-                    <Pressable onPress={onComplete} hitSlop={12}>
-                        <Text style={styles.headerSkip}>Skip</Text>
+                    <Pressable onPress={onComplete} hitSlop={12} style={styles.headerSkip}>
+                        <Text style={styles.headerSkipLabel}>Skip</Text>
                     </Pressable>
                 </Animated.View>
             );

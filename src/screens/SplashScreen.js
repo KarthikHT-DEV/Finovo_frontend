@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, Animated, Easing } from 'react-native';
+import { View, Text, Animated, Easing, Image } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../styles/theme';
 import getSplashStyles, {
@@ -35,17 +35,18 @@ export default function SplashScreen({ onComplete }) {
     useEffect(() => {
         // === Staggered entrance sequence ===
         Animated.sequence([
-            // Phase 1: Logo springs into view
+            Animated.delay(150), // Settle delay
+            // Phase 1: Logo springs into view (Much slower)
             Animated.parallel([
                 Animated.spring(logoScale, {
                     toValue: 1,
-                    friction: 6,
-                    tension: 45,
+                    friction: 9, // Even more friction
+                    tension: 25, // Lower tension
                     useNativeDriver: true,
                 }),
                 Animated.timing(logoOpacity, {
                     toValue: 1,
-                    duration: 450,
+                    duration: 1000, // Increased to 1s
                     easing: Easing.out(Easing.ease),
                     useNativeDriver: true,
                 }),
@@ -55,13 +56,13 @@ export default function SplashScreen({ onComplete }) {
             Animated.parallel([
                 Animated.timing(titleOpacity, {
                     toValue: 1,
-                    duration: 380,
+                    duration: 800, // Increased
                     easing: Easing.out(Easing.ease),
                     useNativeDriver: true,
                 }),
                 Animated.timing(titleTranslateY, {
                     toValue: 0,
-                    duration: 380,
+                    duration: 800, // Increased
                     easing: Easing.out(Easing.cubic),
                     useNativeDriver: true,
                 }),
@@ -70,26 +71,25 @@ export default function SplashScreen({ onComplete }) {
             // Phase 3: Tagline fades in
             Animated.timing(taglineOpacity, {
                 toValue: 1,
-                duration: 320,
+                duration: 700, // Increased
                 easing: Easing.out(Easing.ease),
                 useNativeDriver: true,
             }),
         ]).start();
 
-        // Progress bar runs in parallel with the above sequence.
-        // useNativeDriver: false is required for layout-based width property.
+        // Progress bar fills COMPLETELY
         Animated.timing(progressFillWidth, {
-            toValue: PROGRESS_TRACK_WIDTH * PROGRESS_FILL_RATIO,
-            duration: 2200,
-            easing: Easing.out(Easing.quad),
+            toValue: PROGRESS_TRACK_WIDTH,
+            duration: 3500, // Much slower and more visible
+            easing: Easing.inOut(Easing.quad),
             useNativeDriver: false,
         }).start(() => {
             // === Out Animation ===
             Animated.parallel([
-                Animated.timing(logoOpacity, { toValue: 0, duration: 400, useNativeDriver: true }),
-                Animated.timing(titleOpacity, { toValue: 0, duration: 400, useNativeDriver: true }),
-                Animated.timing(taglineOpacity, { toValue: 0, duration: 400, useNativeDriver: true }),
-                Animated.timing(logoScale, { toValue: 1.1, duration: 400, useNativeDriver: true }),
+                Animated.timing(logoOpacity, { toValue: 0, duration: 600, useNativeDriver: true }),
+                Animated.timing(titleOpacity, { toValue: 0, duration: 600, useNativeDriver: true }),
+                Animated.timing(taglineOpacity, { toValue: 0, duration: 600, useNativeDriver: true }),
+                Animated.timing(logoScale, { toValue: 1.15, duration: 600, useNativeDriver: true }),
             ]).start(() => {
                 if (onComplete) onComplete();
             });
@@ -111,7 +111,11 @@ export default function SplashScreen({ onComplete }) {
                     },
                 ]}
             >
-                <MaterialCommunityIcons name="wallet" size={48} color={colors.accent} />
+                <Image 
+                    source={require('../../assets/app-icon.png')} 
+                    style={{ width: '100%', height: '100%', borderRadius: 12 }} 
+                    resizeMode="contain"
+                />
             </Animated.View>
 
             {/* ── App Name ── */}

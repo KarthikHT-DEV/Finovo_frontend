@@ -4,21 +4,21 @@
     "slug": "finovo",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/app-icon.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/app-splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#F5F0E8"
+      "backgroundColor": "#121212"
     },
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/app-adaptive.png",
+        "backgroundColor": "#171717"
       },
       "edgeToEdgeEnabled": true
     },

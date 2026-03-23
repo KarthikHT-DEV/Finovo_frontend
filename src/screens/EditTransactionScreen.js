@@ -10,20 +10,23 @@ import {
     Easing,
     KeyboardAvoidingView,
     Platform,
-    Alert,
     Modal,
     Keyboard,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import transactionService from '../services/transactionService';
 import { useTheme } from '../styles/theme';
+import { useAlert } from '../contexts/AlertContext';
 import { getStyles } from '../styles/AddTransactionScreen.styles';
 import CalendarRangePicker from '../components/CalendarRangePicker';
 
-export default function EditTransactionScreen({ transaction, onCancel, onSaveSuccess, onDeleteSuccess }) {
+export default function EditTransactionScreen({ transaction, onBack, onUpdate }) {
     const { colors, currency } = useTheme();
-    const styles = React.useMemo(() => getStyles(colors), [colors]);
+    const { showAlert } = useAlert();
+    const insets = useSafeAreaInsets();
+    const styles = React.useMemo(() => getStyles(colors, insets), [colors, insets]);
     const [type, setType] = useState('EXPENSE'); // 'INCOME' or 'EXPENSE'
     const [amount, setAmount] = useState('');
     const [description, setDescription] = useState('');
@@ -56,7 +59,6 @@ export default function EditTransactionScreen({ transaction, onCancel, onSaveSuc
     const [saving, setSaving] = useState(false);
     const [deleting, setDeleting] = useState(false);
     const [error, setError] = useState(null);
-    const [deleteAlertVisible, setDeleteAlertVisible] = useState(false);
 
     // Animated values
     const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -156,7 +158,7 @@ export default function EditTransactionScreen({ transaction, onCancel, onSaveSuc
                 payment_method: paymentMethod,
             });
 
-            onSaveSuccess?.();
+            onUpdate?.();
         } catch (err) {
             console.warn('Update failed', err);
             setError('Failed to update transaction.');
@@ -166,20 +168,25 @@ export default function EditTransactionScreen({ transaction, onCancel, onSaveSuc
     };
 
     const handleDelete = () => {
-        setDeleteAlertVisible(true);
-    };
-
-    const confirmDelete = async () => {
-        setDeleteAlertVisible(false);
-        try {
-            setDeleting(true);
-            await transactionService.deleteTransaction(transaction.id);
-            onDeleteSuccess?.();
-        } catch (e) {
-            Alert.alert('Error', 'Failed to delete transaction.');
-        } finally {
-            setDeleting(false);
-        }
+        showAlert(
+            'Delete Transaction',
+            'Are you sure you want to delete this transaction?',
+            {
+                confirmText: 'Delete',
+                destructive: true,
+                onConfirm: async () => {
+                    try {
+                        setDeleting(true);
+                        await transactionService.deleteTransaction(transaction.id);
+                        onUpdate();
+                    } catch (err) {
+                        showAlert('Error', 'Failed to delete transaction.');
+                    } finally {
+                        setDeleting(false);
+                    }
+                }
+            }
+        );
     };
 
     const handleAmountChange = (text) => {
@@ -190,8 +197,6 @@ export default function EditTransactionScreen({ transaction, onCancel, onSaveSuc
         setAmount(cleaned);
     };
 
-    // (no longer needed handleDateChange)
-
     const formattedDate = date.toLocaleDateString('en-US', {
         month: '2-digit',
         day: '2-digit',
@@ -201,26 +206,27 @@ export default function EditTransactionScreen({ transaction, onCancel, onSaveSuc
     return (
         <KeyboardAvoidingView
             style={styles.container}
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 24}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
         >
             <ScrollView
                 contentContainerStyle={[
                     styles.scrollContent,
-                    keyboardVisible && { paddingBottom: 250 }
+                    { flexGrow: 1 },
+                    keyboardVisible && { paddingBottom: 150 }
                 ]}
                 keyboardShouldPersistTaps="handled"
                 showsVerticalScrollIndicator={false}
             >
                 {/* ── Header ── */}
                 <View style={styles.headerRow}>
-                    <Pressable style={styles.headerLeft} onPress={onCancel}>
+                    <Pressable style={styles.headerLeft} onPress={onBack}>
                         <MaterialCommunityIcons name="arrow-left" size={28} color={colors.textPrimary} />
                     </Pressable>
                     <View style={styles.headerCenter}>
                         <Text style={styles.headerTitle}>Edit Transaction</Text>
                     </View>
-                    <Pressable style={styles.headerRight} onPress={onCancel}>
+                    <Pressable style={styles.headerRight} onPress={onBack}>
                         <Text style={styles.cancelText}>Cancel</Text>
                     </Pressable>
                 </View>
@@ -372,7 +378,7 @@ export default function EditTransactionScreen({ transaction, onCancel, onSaveSuc
             {!loadingCats && (
                 <View style={[styles.stickyFooter, keyboardVisible && styles.stickyFooterKeyboard]}>
                     {error && <Text style={styles.errorText}>{error}</Text>}
-                    
+
                     <Pressable
                         style={[styles.saveButton, saving && styles.saveButtonDisabled]}
                         onPress={handleSave}
@@ -398,24 +404,6 @@ export default function EditTransactionScreen({ transaction, onCancel, onSaveSuc
                     </Pressable>
                 </View>
             )}
-
-            {/* Custom Alert Modal for Delete */}
-            <Modal visible={deleteAlertVisible} transparent animationType="fade" onRequestClose={() => setDeleteAlertVisible(false)}>
-                <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center' }}>
-                    <View style={{ backgroundColor: colors.backgroundCard, borderRadius: 12, width: '80%', padding: 24, elevation: 5, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4 }}>
-                        <Text style={{ fontSize: 18, fontWeight: 'bold', color: colors.textPrimary, marginBottom: 12 }}>Delete Transaction</Text>
-                        <Text style={{ fontSize: 14, color: colors.textSecondary, marginBottom: 24, lineHeight: 20 }}>Are you sure you want to delete this transaction?</Text>
-                        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 16 }}>
-                            <Pressable onPress={() => setDeleteAlertVisible(false)} hitSlop={10} style={{ padding: 8 }}>
-                                <Text style={{ color: colors.textSecondary, fontWeight: 'bold', fontSize: 14, letterSpacing: 0.5 }}>CANCEL</Text>
-                            </Pressable>
-                            <Pressable onPress={confirmDelete} hitSlop={10} style={{ padding: 8 }}>
-                                <Text style={{ color: colors.textDanger, fontWeight: 'bold', fontSize: 14, letterSpacing: 0.5 }}>DELETE</Text>
-                            </Pressable>
-                        </View>
-                    </View>
-                </View>
-            </Modal>
         </KeyboardAvoidingView>
     );
 }
