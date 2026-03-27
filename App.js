@@ -23,7 +23,8 @@ import NotificationsScreen from './src/screens/NotificationsScreen';
 import TransactionInfoScreen from './src/screens/TransactionInfoScreen';
 import NotificationSettingsScreen from './src/screens/NotificationSettingsScreen';
 import PrivacyPolicyScreen from './src/screens/PrivacyPolicyScreen';
-import DataExportScreen from './src/screens/DataExportScreen';
+import FavoritesScreen from './src/screens/FavoritesScreen';
+import AllTransactionsScreen from './src/screens/AllTransactionsScreen';
 import OTPScreen from './src/screens/OTPScreen';
 import VerifyEmailScreen from './src/screens/VerifyEmailScreen';
 import ForgotPasswordScreen from './src/screens/ForgotPasswordScreen';
@@ -58,7 +59,8 @@ const SCREENS = {
   TRANSACTION_INFO: 'transaction_info',
   NOTIFICATION_SETTINGS: 'notification_settings',
   PRIVACY_POLICY: 'privacy_policy',
-  DATA: 'data',
+  FAVORITES: 'favorites',
+  ALL_TRANSACTIONS: 'all_transactions',
   ACCEPT_PRIVACY: 'accept_privacy',
   OTP: 'otp',
   VERIFY_EMAIL: 'verify_email',
@@ -147,7 +149,8 @@ function AppContent() {
       case 'set_budget': navigate(SCREENS.SET_BUDGET); break;
       case 'account_settings': navigate(SCREENS.ACCOUNT_SETTINGS); break;
       case 'verify_email': navigate(SCREENS.VERIFY_EMAIL); break;
-      case 'data': navigate(SCREENS.DATA); break;
+      case 'favorites': navigate(SCREENS.FAVORITES); break;
+      case 'all_transactions': navigate(SCREENS.ALL_TRANSACTIONS); break;
       default: break;
     }
   };
@@ -440,10 +443,17 @@ function AppContent() {
         />
       )}
 
-      {screen === SCREENS.DATA && (
-        <DataExportScreen
-          onBack={() => navigate(SCREENS.HOME)}
+      {screen === SCREENS.FAVORITES && (
+        <FavoritesScreen
           onNavigate={handleTabNav}
+          onEditTransaction={handleEditTransaction}
+        />
+      )}
+
+      {screen === SCREENS.ALL_TRANSACTIONS && (
+        <AllTransactionsScreen
+          onBack={goBack}
+          onEditTransaction={handleEditTransaction}
         />
       )}
 

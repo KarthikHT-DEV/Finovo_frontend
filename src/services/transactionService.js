@@ -70,58 +70,20 @@ const getTransactions = async (filters = {}) => {
     }
     if (filters.startDate) params.push(`start_date=${filters.startDate}`);
     if (filters.endDate) params.push(`end_date=${filters.endDate}`);
+    if (filters.isFavorite !== undefined) params.push(`is_favorite=${filters.isFavorite}`);
 
     if (params.length > 0) url += `?${params.join('&')}`;
     const response = await apiClient.get(url);
     return response.data;
 };
 
-const exportTransactions = async (format = 'csv') => {
-    const token = apiClient.defaults.headers.common['Authorization'];
-    const ext = format === 'xlsx' ? 'xlsx' : 'csv';
-
-    // Ensure URL has exactly one slash between baseURL and path
-    const cleanBase = apiClient.defaults.baseURL.replace(/\/+$/, '');
-    const url = `${cleanBase}/transactions/download-export/?format=${format}`;
-
-    let fileUri = `${FileSystem.documentDirectory}finovo_transactions_${Date.now()}.${ext}`;
-    if (format === 'sample') {
-        fileUri = `${FileSystem.documentDirectory}finovo_sample_template.csv`;
-    }
-
-    console.log('[V3-DEBUG] EXPORTING:', format);
-    console.log('[V3-DEBUG] FULL URL:', url);
-    console.log('[V3-DEBUG] TOKEN DEFINED:', !!token);
-
-    const { uri, status } = await FileSystem.downloadAsync(
-        url,
-        fileUri,
-        {
-            headers: token ? { Authorization: token } : {}
-        }
-    );
-
-    console.log('[V3-DEBUG] SERVER STATUS:', status);
-
-    if (status !== 200) {
-        throw new Error(`Export failed from server. Status: ${status}`);
-    }
-    return uri;
-};
-
-const importTransactions = async (fileObject) => {
-    const formData = new FormData();
-    formData.append('file', fileObject);
-    // Let React Native/fetch handle the multipart boundary automatically
-    const response = await apiClient.post('/transactions/import/', formData);
+const markFavorite = async (id) => {
+    const response = await apiClient.post(`/transactions/${id}/favorite/`);
     return response.data;
 };
 
-/**
- * Clear all user transaction data.
- */
-const cleanupData = async () => {
-    const response = await apiClient.delete('/transactions/cleanup/');
+const unmarkFavorite = async (id) => {
+    const response = await apiClient.post(`/transactions/${id}/unfavorite/`);
     return response.data;
 };
 
@@ -133,7 +95,6 @@ export default {
     updateTransaction,
     deleteTransaction,
     getTransactions,
-    exportTransactions,
-    importTransactions,
-    cleanupData
+    markFavorite,
+    unmarkFavorite
 };

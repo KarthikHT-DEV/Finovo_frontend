@@ -8,7 +8,7 @@ const TABS = [
     { key: 'home', label: 'Home', icon: 'home-variant', iconOff: 'home-variant-outline' },
     { key: 'analytics', label: 'Analytics', icon: 'chart-bar', iconOff: 'chart-bar' },
     { key: 'add', label: null, icon: 'plus', iconOff: 'plus' },   // FAB
-    { key: 'data', label: 'Data', icon: 'database', iconOff: 'database-outline' },
+    { key: 'favorites', label: 'Favorites', icon: 'star', iconOff: 'star-outline' },
     { key: 'profile', label: 'Profile', icon: 'account', iconOff: 'account-outline' },
 ];
 

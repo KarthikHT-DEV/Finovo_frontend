@@ -36,6 +36,7 @@ export default function EditTransactionScreen({ transaction, onBack, onUpdate })
     const [date, setDate] = useState(new Date());
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [paymentMethod, setPaymentMethod] = useState('CARD');
+    const [isFavorite, setIsFavorite] = useState(false);
 
     const INCOME_PM = [
         { id: 'BANK_TRANSFER', label: 'Bank', icon: 'bank-outline' },
@@ -94,6 +95,7 @@ export default function EditTransactionScreen({ transaction, onBack, onUpdate })
         setDescription(transaction.description || '');
         if (transaction.date) setDate(new Date(transaction.date));
         if (transaction.payment_method) setPaymentMethod(transaction.payment_method);
+        setIsFavorite(!!transaction.is_favorite);
 
         loadCategories(transaction.category?.id);
     }, [transaction]);
@@ -156,6 +158,7 @@ export default function EditTransactionScreen({ transaction, onBack, onUpdate })
                 category_id: selectedCategory.id,
                 date: date.toISOString(),
                 payment_method: paymentMethod,
+                is_favorite: isFavorite,
             });
 
             onUpdate?.();
@@ -207,8 +210,7 @@ export default function EditTransactionScreen({ transaction, onBack, onUpdate })
         <KeyboardAvoidingView
             style={styles.container}
             behavior="padding"
-            keyboardVerticalOffset={Platform.OS === 'android' ? -200 : 0}
-            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : (Platform.OS === 'android' ? -200 : 0)}
         >
             <ScrollView
                 contentContainerStyle={[
@@ -358,6 +360,23 @@ export default function EditTransactionScreen({ transaction, onBack, onUpdate })
                                 </ScrollView>
                             </View>
                         </Modal>
+
+                        {/* ── Favorite Toggle ── */}
+                        <Text style={[styles.inputSectionLabel, { marginTop: 8 }]}>FAVORITE</Text>
+                        <Pressable 
+                            style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 24, paddingLeft: 8 }}
+                            onPress={() => setIsFavorite(!isFavorite)}
+                            hitSlop={10}
+                        >
+                            <MaterialCommunityIcons 
+                                name={isFavorite ? "star" : "star-outline"} 
+                                size={28} 
+                                color={isFavorite ? "#FFD700" : colors.textMuted} 
+                            />
+                            <Text style={{ marginLeft: 12, fontSize: 16, color: colors.textPrimary, fontWeight: '500' }}>
+                                Mark as Favorite
+                            </Text>
+                        </Pressable>
 
                         {/* ── Notes Input ── */}
                         <Text style={styles.inputSectionLabel}>NOTES</Text>
