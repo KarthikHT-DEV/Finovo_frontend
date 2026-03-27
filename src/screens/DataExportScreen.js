@@ -29,40 +29,24 @@ export default function DataExportScreen({ onBack, onNavigate }) {
         try {
             setIsLoading(true);
             setLoadingMessage(`Generating ${format.toUpperCase()} file…`);
-            const blob = await transactionService.exportTransactions(format);
 
-            const reader = new FileReader();
-            reader.onload = async () => {
-                const base64 = reader.result.split(',')[1];
-                const ext = format === 'xlsx' ? 'xlsx' : 'csv';
-                const filename = `finovo_transactions_${Date.now()}.${ext}`;
-                const fileUri = FileSystem.documentDirectory + filename;
+            // service returns a saved file URI
+            const fileUri = await transactionService.exportTransactions(format);
 
-                await FileSystem.writeAsStringAsync(fileUri, base64, {
-                    encoding: FileSystem.EncodingType.Base64,
+            if (await Sharing.isAvailableAsync()) {
+                await Sharing.shareAsync(fileUri, {
+                    mimeType: format === 'xlsx'
+                        ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                        : 'text/csv',
+                    dialogTitle: 'Share your Finovo transactions',
                 });
-
-                if (await Sharing.isAvailableAsync()) {
-                    await Sharing.shareAsync(fileUri, {
-                        mimeType: format === 'xlsx'
-                            ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-                            : 'text/csv',
-                        dialogTitle: 'Share your Finovo transactions',
-                    });
-                } else {
-                    Alert.alert('Saved', `File saved to:\n${fileUri}`);
-                }
-                setIsLoading(false);
-            };
-            reader.onerror = () => {
-                Alert.alert('Error', 'Failed to read the downloaded file.');
-                setIsLoading(false);
-            };
-            reader.readAsDataURL(blob);
+            } else {
+                Alert.alert('Saved', `File saved to:\n${fileUri}`);
+            }
+            setIsLoading(false);
         } catch (err) {
             console.error('Export failed', err);
-            const msg = err?.response?.data?.error || 'Failed to export data. Please try again.';
-            Alert.alert('Export Failed', msg);
+            Alert.alert('Export Failed', 'Failed to export data. Please try again.');
             setIsLoading(false);
         }
     };
@@ -74,23 +58,15 @@ export default function DataExportScreen({ onBack, onNavigate }) {
         try {
             setIsLoading(true);
             setLoadingMessage('Downloading sample template…');
-            const blob = await transactionService.exportTransactions('sample');
 
-            const reader = new FileReader();
-            reader.onload = async () => {
-                const base64 = reader.result.split(',')[1];
-                const fileUri = FileSystem.documentDirectory + 'finovo_sample_template.csv';
-                await FileSystem.writeAsStringAsync(fileUri, base64, {
-                    encoding: FileSystem.EncodingType.Base64,
-                });
-                if (await Sharing.isAvailableAsync()) {
-                    await Sharing.shareAsync(fileUri, { mimeType: 'text/csv' });
-                } else {
-                    Alert.alert('Saved', `Sample saved to:\n${fileUri}`);
-                }
-                setIsLoading(false);
-            };
-            reader.readAsDataURL(blob);
+            const fileUri = await transactionService.exportTransactions('sample');
+
+            if (await Sharing.isAvailableAsync()) {
+                await Sharing.shareAsync(fileUri, { mimeType: 'text/csv' });
+            } else {
+                Alert.alert('Saved', `Sample saved to:\n${fileUri}`);
+            }
+            setIsLoading(false);
         } catch (err) {
             Alert.alert('Error', 'Failed to download sample template.');
             setIsLoading(false);

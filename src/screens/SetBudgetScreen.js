@@ -4,6 +4,7 @@ import {
     ActivityIndicator, Animated, StyleSheet,
     KeyboardAvoidingView, Platform, Alert, Switch,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import transactionService from '../services/transactionService';
@@ -20,7 +21,8 @@ export default function SetBudgetScreen({ onBack, onNavigate }) {
     const BORDER = colors.divider;
     const ACCENT = colors.accent;
     const RED = colors.textDanger;
-    const s = React.useMemo(() => getStyles(colors, BG, CARD, DARK, MUTED, BORDER, ACCENT, RED), [colors]);
+    const insets = useSafeAreaInsets();
+    const s = React.useMemo(() => getStyles(colors, BG, CARD, DARK, MUTED, BORDER, ACCENT, RED, insets), [colors, insets]);
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -248,8 +250,7 @@ export default function SetBudgetScreen({ onBack, onNavigate }) {
         </View>
     );
 }
-
-const getStyles = (colors, BG, CARD, DARK, MUTED, BORDER, ACCENT, RED) => StyleSheet.create({
+const getStyles = (colors, BG, CARD, DARK, MUTED, BORDER, ACCENT, RED, insets) => StyleSheet.create({
     container: { flex: 1, backgroundColor: BG },
 
     // Top bar
@@ -320,9 +321,10 @@ const getStyles = (colors, BG, CARD, DARK, MUTED, BORDER, ACCENT, RED) => StyleS
         textAlign: 'right', minWidth: 40,
     },
 
-    // Save Btn
     saveBtnWrapper: {
-        paddingHorizontal: 20, paddingBottom: 0, paddingTop: 8,
+        paddingHorizontal: 20, 
+        paddingBottom: Math.max(8, insets.bottom) + 84, // Account for fixed BottomNav height
+        paddingTop: 8,
         backgroundColor: BG,
     },
     saveBtn: {

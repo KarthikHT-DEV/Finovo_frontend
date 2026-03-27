@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import * as ScreenCapture from 'expo-screen-capture';
 import {
     Animated,
     Easing,
@@ -47,6 +48,8 @@ export default function RegisterScreen({ onBack, onSignInPress, onRegisterSucces
     const bottomAnim = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
+        // Explicitly allow screenshots on this screen
+        ScreenCapture.allowScreenCaptureAsync();
         Animated.stagger(55, [
             Animated.timing(headerAnim, {
                 toValue: 1,
@@ -159,8 +162,8 @@ export default function RegisterScreen({ onBack, onSignInPress, onRegisterSucces
         <View style={styles.container}>
             <KeyboardAvoidingView
                 style={{ flex: 1 }}
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                keyboardVerticalOffset={0}
             >
                 <Animated.View
                     style={[

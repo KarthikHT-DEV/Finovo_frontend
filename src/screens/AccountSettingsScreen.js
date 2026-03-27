@@ -244,235 +244,235 @@ export default function AccountSettingsScreen({ onBack, onNavigate, onLogout }) 
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
             >
-            {/* ── Fixed top bar ── */}
-            <View style={s.topBar}>
-                <Pressable onPress={onBack} hitSlop={12}>
-                    <MaterialCommunityIcons name="arrow-left" size={26} color={DARK} />
-                </Pressable>
-                <Text style={s.topBarTitle}>Account Settings</Text>
-                <View style={{ width: 26 }} />
-            </View>
-
-            <Animated.ScrollView
-                contentContainerStyle={s.scroll}
-                showsVerticalScrollIndicator={false}
-                style={{ opacity: fadeAnim, flex: 1 }}
-                keyboardShouldPersistTaps="handled"
-            >
-                {/* ── Avatar ── */}
-                <View style={s.avatarSection}>
-                    <Pressable style={s.avatarWrapper} onPress={handlePickPhoto}>
-                        {avatarUri ? (
-                            <Image source={{ uri: avatarUri }} style={s.avatarImage} />
-                        ) : profile?.avatar_url ? (
-                            <Image
-                                source={{
-                                    uri: profile.avatar_url.startsWith('http')
-                                        ? profile.avatar_url
-                                        : `${MEDIA_BASE_URL}${profile.avatar_url}`
-                                }}
-                                style={s.avatarImage}
-                            />
-                        ) : (
-                            <Text style={s.avatarInitials}>{initials}</Text>
-                        )}
-                        {/* Camera overlay */}
-                        <View style={s.cameraOverlay}>
-                            <MaterialCommunityIcons name="camera" size={16} color={DARK} />
-                        </View>
+                {/* ── Fixed top bar ── */}
+                <View style={s.topBar}>
+                    <Pressable onPress={onBack} hitSlop={12}>
+                        <MaterialCommunityIcons name="arrow-left" size={26} color={DARK} />
                     </Pressable>
-                    <Pressable onPress={handlePickPhoto} hitSlop={8}>
-                        <Text style={s.editPhotoText}>EDIT PHOTO</Text>
-                    </Pressable>
+                    <Text style={s.topBarTitle}>Account Settings</Text>
+                    <View style={{ width: 26 }} />
                 </View>
 
-                {/* ── Form Fields ── */}
-                <View style={s.formSection}>
-                    <FieldRow
-                        label="FULL NAME"
-                        value={fullName}
-                        onChangeText={setFullName}
-                        placeholder="Your full name"
-                        s={s}
-                        MUTED={MUTED}
-                    />
-                    <FieldRow
-                        label="USERNAME"
-                        value={username}
-                        editable={false}
-                        placeholder="Not set"
-                        s={s}
-                        MUTED={MUTED}
-                    />
-                    <FieldRow
-                        label="EMAIL ADDRESS"
-                        value={email}
-                        onChangeText={setEmail}
-                        keyboardType="email-address"
-                        placeholder="email@example.com"
-                        s={s}
-                        MUTED={MUTED}
-                    />
-                    {profile && !profile.is_verified && (
-                        <View style={s.verifyContainer}>
-                            <MaterialCommunityIcons name="alert-circle-outline" size={16} color="#FF9500" />
-                            <Text style={s.unverifiedText}>Email not verified</Text>
-                            <Pressable onPress={handleVerifyEmail} style={s.verifyBtn}>
-                                <Text style={s.verifyBtnText}>Verify Now</Text>
-                            </Pressable>
-                        </View>
-                    )}
-                    <FieldRow
-                        label="PHONE NUMBER"
-                        value={phone}
-                        onChangeText={setPhone}
-                        keyboardType="phone-pad"
-                        placeholder="Your phone number"
-                        s={s}
-                        MUTED={MUTED}
-                    />
-                </View>
-
-                {/* ── Currency Selector ── */}
-                <View style={[s.fieldRow, { borderBottomWidth: 0, paddingBottom: 0 }]}>
-                    <Text style={s.fieldLabel}>BASE CURRENCY</Text>
-                </View>
-                <Pressable
-                    style={s.currencySelector}
-                    onPress={() => setCurrencyModalVisible(true)}
+                <Animated.ScrollView
+                    contentContainerStyle={s.scroll}
+                    showsVerticalScrollIndicator={false}
+                    style={{ opacity: fadeAnim, flex: 1 }}
+                    keyboardShouldPersistTaps="handled"
                 >
-                    <View style={s.currencyLeft}>
-                        <Text style={s.currencyFlag}>{currency.flag}</Text>
-                        <View>
-                            <Text style={s.currencyName}>{currency.label}</Text>
-                            <Text style={s.currencyCode}>{currency.code} ({currency.symbol})</Text>
-                        </View>
-                    </View>
-                    <MaterialCommunityIcons name="chevron-down" size={20} color={DARK} />
-                </Pressable>
-
-                <View style={[s.fieldDivider, { marginTop: 12 }]} />
- 
-                {/* ── Delete Account ── */}
-                <View style={{ marginTop: 24 }}>
-                    <View style={[s.fieldRow, { borderBottomWidth: 0, paddingBottom: 0 }]}>
-                        <Text style={s.fieldLabel}>DELETE ACCOUNT</Text>
-                    </View>
-                    <Pressable
-                        style={s.currencySelector}
-                        onPress={() => setDeleteModalVisible(true)}
-                    >
-                        <View style={s.currencyLeft}>
-                            <MaterialCommunityIcons name="delete-outline" size={24} color="#FF3B30" />
-                            <View style={{ marginLeft: 12 }}>
-                                <Text style={[s.currencyName, { color: '#FF3B30' }]}>Delete Account</Text>
-                                <Text style={s.currencyCode}>Permanently remove all data</Text>
+                    {/* ── Avatar ── */}
+                    <View style={s.avatarSection}>
+                        <Pressable style={s.avatarWrapper} onPress={handlePickPhoto}>
+                            {avatarUri ? (
+                                <Image source={{ uri: avatarUri }} style={s.avatarImage} />
+                            ) : profile?.avatar_url ? (
+                                <Image
+                                    source={{
+                                        uri: profile.avatar_url.startsWith('http')
+                                            ? profile.avatar_url
+                                            : `${MEDIA_BASE_URL}${profile.avatar_url}`
+                                    }}
+                                    style={s.avatarImage}
+                                />
+                            ) : (
+                                <Text style={s.avatarInitials}>{initials}</Text>
+                            )}
+                            {/* Camera overlay */}
+                            <View style={s.cameraOverlay}>
+                                <MaterialCommunityIcons name="camera" size={16} color={DARK} />
                             </View>
-                        </View>
-                        <MaterialCommunityIcons name="chevron-right" size={20} color={MUTED} />
-                    </Pressable>
-                </View>
-
-                {/* ── Save Button ── */}
-                <View style={s.saveBtnWrapper}>
-                    <Pressable
-                        style={[s.saveBtn, saving && { opacity: 0.7 }]}
-                        onPress={handleSave}
-                        disabled={saving}
-                    >
-                        {saving ? (
-                            <ActivityIndicator color={colors.backgroundPrimary} />
-                        ) : (
-                            <Text style={s.saveBtnText}>Save</Text>
-                        )}
-                    </Pressable>
-                </View>
-
-            </Animated.ScrollView>
-
-
-            {/* ── Currency Selection Modal ── */}
-            <Modal visible={currencyModalVisible} animationType="slide" transparent={true} onRequestClose={() => setCurrencyModalVisible(false)}>
-                <View style={s.modalOverlay}>
-                    <View style={s.modalSheet}>
-                        <Text style={s.modalTitle}>Select Currency</Text>
-                        <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 400 }}>
-                            {CURRENCIES.map((c) => (
-                                <Pressable
-                                    key={c.code}
-                                    style={s.currencyOption}
-                                    onPress={() => { changeCurrency(c); setCurrencyModalVisible(false); }}
-                                >
-                                    <Text style={s.optionFlag}>{c.flag}</Text>
-                                    <Text style={[s.optionText, currency.code === c.code && { fontWeight: 'bold', color: ACCENT }]}>
-                                        {c.label} ({c.symbol})
-                                    </Text>
-                                    {currency.code === c.code && (
-                                        <MaterialCommunityIcons name="check" size={20} color={ACCENT} />
-                                    )}
-                                </Pressable>
-                            ))}
-                        </ScrollView>
-                        <Pressable style={s.closeModalBtn} onPress={() => setCurrencyModalVisible(false)}>
-                            <Text style={s.closeModalText}>Close</Text>
+                        </Pressable>
+                        <Pressable onPress={handlePickPhoto} hitSlop={8}>
+                            <Text style={s.editPhotoText}>EDIT PHOTO</Text>
                         </Pressable>
                     </View>
-                </View>
-            </Modal>
 
-            {/* ── Delete Account Modal ── */}
-            <Modal visible={deleteModalVisible} animationType="fade" transparent={true}>
-                <View style={s.modalOverlay}>
-                    <View style={s.modalSheet}>
-                        <View style={{ alignItems: 'center', marginBottom: 20 }}>
-                            <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: 'rgba(255,59,48,0.1)', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
-                                <MaterialCommunityIcons name="alert-circle-outline" size={32} color="#FF3B30" />
-                            </View>
-                            <Text style={s.modalTitle}>Delete Account?</Text>
-                            <Text style={{ color: MUTED, textAlign: 'center', lineHeight: 22, fontSize: 14 }}>
-                                This action is permanent. All your transactions, budgets, and settings will be erased forever.
-                            </Text>
-                        </View>
-
+                    {/* ── Form Fields ── */}
+                    <View style={s.formSection}>
                         <FieldRow
-                            label="CONFIRM PASSWORD"
-                            value={deletePassword}
-                            onChangeText={setDeletePassword}
-                            placeholder="Enter password to confirm"
+                            label="FULL NAME"
+                            value={fullName}
+                            onChangeText={setFullName}
+                            placeholder="Your full name"
                             s={s}
                             MUTED={MUTED}
                         />
+                        <FieldRow
+                            label="USERNAME"
+                            value={username}
+                            editable={false}
+                            placeholder="Not set"
+                            s={s}
+                            MUTED={MUTED}
+                        />
+                        <FieldRow
+                            label="EMAIL ADDRESS"
+                            value={email}
+                            onChangeText={setEmail}
+                            keyboardType="email-address"
+                            placeholder="email@example.com"
+                            s={s}
+                            MUTED={MUTED}
+                        />
+                        {profile && !profile.is_verified && (
+                            <View style={s.verifyContainer}>
+                                <MaterialCommunityIcons name="alert-circle-outline" size={16} color="#FF9500" />
+                                <Text style={s.unverifiedText}>Email not verified</Text>
+                                <Pressable onPress={handleVerifyEmail} style={s.verifyBtn}>
+                                    <Text style={s.verifyBtnText}>Verify Now</Text>
+                                </Pressable>
+                            </View>
+                        )}
+                        <FieldRow
+                            label="PHONE NUMBER"
+                            value={phone}
+                            onChangeText={setPhone}
+                            keyboardType="phone-pad"
+                            placeholder="Your phone number"
+                            s={s}
+                            MUTED={MUTED}
+                        />
+                    </View>
 
-                        <View style={{ flexDirection: 'row', gap: 12, marginTop: 12 }}>
-                            <Pressable
-                                style={[s.closeModalBtn, { flex: 1, backgroundColor: 'rgba(0,0,0,0.05)', borderRadius: 12, marginTop: 0 }]}
-                                onPress={() => {
-                                    setDeleteModalVisible(false);
-                                    setDeletePassword('');
-                                }}
-                            >
-                                <Text style={[s.closeModalText, { color: DARK }]}>Cancel</Text>
-                            </Pressable>
-                            <Pressable
-                                style={[s.saveBtn, { flex: 2, backgroundColor: '#FF3B30', marginTop: 0 }]}
-                                onPress={handleDeleteAccount}
-                                disabled={deleting}
-                            >
-                                {deleting ? (
-                                    <ActivityIndicator color="#fff" />
-                                ) : (
-                                    <Text style={[s.saveBtnText, { color: '#fff' }]}>Delete Account</Text>
-                                )}
+                    {/* ── Currency Selector ── */}
+                    <View style={[s.fieldRow, { borderBottomWidth: 0, paddingBottom: 0 }]}>
+                        <Text style={s.fieldLabel}>BASE CURRENCY</Text>
+                    </View>
+                    <Pressable
+                        style={s.currencySelector}
+                        onPress={() => setCurrencyModalVisible(true)}
+                    >
+                        <View style={s.currencyLeft}>
+                            <Text style={s.currencyFlag}>{currency.flag}</Text>
+                            <View>
+                                <Text style={s.currencyName}>{currency.label}</Text>
+                                <Text style={s.currencyCode}>{currency.code} ({currency.symbol})</Text>
+                            </View>
+                        </View>
+                        <MaterialCommunityIcons name="chevron-down" size={20} color={DARK} />
+                    </Pressable>
+
+                    <View style={[s.fieldDivider, { marginTop: 12 }]} />
+
+                    {/* ── Delete Account ── */}
+                    <View style={{ marginTop: 24 }}>
+                        <View style={[s.fieldRow, { borderBottomWidth: 0, paddingBottom: 0 }]}>
+                            <Text style={s.fieldLabel}>DELETE ACCOUNT</Text>
+                        </View>
+                        <Pressable
+                            style={s.currencySelector}
+                            onPress={() => setDeleteModalVisible(true)}
+                        >
+                            <View style={s.currencyLeft}>
+                                <MaterialCommunityIcons name="delete-outline" size={24} color="#FF3B30" />
+                                <View style={{ marginLeft: 12 }}>
+                                    <Text style={[s.currencyName, { color: '#FF3B30' }]}>Delete Account</Text>
+                                    <Text style={s.currencyCode}>Permanently remove all data</Text>
+                                </View>
+                            </View>
+                            <MaterialCommunityIcons name="chevron-right" size={20} color={MUTED} />
+                        </Pressable>
+                    </View>
+
+                    {/* ── Save Button ── */}
+                    <View style={s.saveBtnWrapper}>
+                        <Pressable
+                            style={[s.saveBtn, saving && { opacity: 0.7 }]}
+                            onPress={handleSave}
+                            disabled={saving}
+                        >
+                            {saving ? (
+                                <ActivityIndicator color={colors.backgroundPrimary} />
+                            ) : (
+                                <Text style={s.saveBtnText}>Save</Text>
+                            )}
+                        </Pressable>
+                    </View>
+
+                </Animated.ScrollView>
+
+
+                {/* ── Currency Selection Modal ── */}
+                <Modal visible={currencyModalVisible} animationType="slide" transparent={true} onRequestClose={() => setCurrencyModalVisible(false)}>
+                    <View style={s.modalOverlay}>
+                        <View style={s.modalSheet}>
+                            <Text style={s.modalTitle}>Select Currency</Text>
+                            <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 400 }}>
+                                {CURRENCIES.map((c) => (
+                                    <Pressable
+                                        key={c.code}
+                                        style={s.currencyOption}
+                                        onPress={() => { changeCurrency(c); setCurrencyModalVisible(false); }}
+                                    >
+                                        <Text style={s.optionFlag}>{c.flag}</Text>
+                                        <Text style={[s.optionText, currency.code === c.code && { fontWeight: 'bold', color: ACCENT }]}>
+                                            {c.label} ({c.symbol})
+                                        </Text>
+                                        {currency.code === c.code && (
+                                            <MaterialCommunityIcons name="check" size={20} color={ACCENT} />
+                                        )}
+                                    </Pressable>
+                                ))}
+                            </ScrollView>
+                            <Pressable style={s.closeModalBtn} onPress={() => setCurrencyModalVisible(false)}>
+                                <Text style={s.closeModalText}>Close</Text>
                             </Pressable>
                         </View>
                     </View>
-                </View>
-            </Modal>
+                </Modal>
 
-        </KeyboardAvoidingView>
-        <BottomNav activeTab="profile" onTabChange={onNavigate} />
-    </View>
-);
+                {/* ── Delete Account Modal ── */}
+                <Modal visible={deleteModalVisible} animationType="fade" transparent={true}>
+                    <View style={s.modalOverlay}>
+                        <View style={s.modalSheet}>
+                            <View style={{ alignItems: 'center', marginBottom: 20 }}>
+                                <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: 'rgba(255,59,48,0.1)', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+                                    <MaterialCommunityIcons name="alert-circle-outline" size={32} color="#FF3B30" />
+                                </View>
+                                <Text style={s.modalTitle}>Delete Account?</Text>
+                                <Text style={{ color: MUTED, textAlign: 'center', lineHeight: 22, fontSize: 14 }}>
+                                    This action is permanent. All your transactions, budgets, and settings will be erased forever.
+                                </Text>
+                            </View>
+
+                            <FieldRow
+                                label="CONFIRM PASSWORD"
+                                value={deletePassword}
+                                onChangeText={setDeletePassword}
+                                placeholder="Enter password to confirm"
+                                s={s}
+                                MUTED={MUTED}
+                            />
+
+                            <View style={{ flexDirection: 'row', gap: 12, marginTop: 12 }}>
+                                <Pressable
+                                    style={[s.closeModalBtn, { flex: 1, backgroundColor: 'rgba(0,0,0,0.05)', borderRadius: 12, marginTop: 0 }]}
+                                    onPress={() => {
+                                        setDeleteModalVisible(false);
+                                        setDeletePassword('');
+                                    }}
+                                >
+                                    <Text style={[s.closeModalText, { color: DARK }]}>Cancel</Text>
+                                </Pressable>
+                                <Pressable
+                                    style={[s.saveBtn, { flex: 2, backgroundColor: '#FF3B30', marginTop: 0 }]}
+                                    onPress={handleDeleteAccount}
+                                    disabled={deleting}
+                                >
+                                    {deleting ? (
+                                        <ActivityIndicator color="#fff" />
+                                    ) : (
+                                        <Text style={[s.saveBtnText, { color: '#fff' }]}>Delete Account</Text>
+                                    )}
+                                </Pressable>
+                            </View>
+                        </View>
+                    </View>
+                </Modal>
+
+            </KeyboardAvoidingView>
+            <BottomNav activeTab="profile" onTabChange={onNavigate} />
+        </View>
+    );
 }
 
 const getStyles = (colors, BG, CARD, DARK, ACCENT, MUTED, BORDER, insets) => StyleSheet.create({

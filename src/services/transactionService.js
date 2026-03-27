@@ -1,4 +1,5 @@
 import apiClient from './apiClient';
+import * as FileSystem from 'expo-file-system/legacy';
 
 /**
  * Fetch all available categories (Income/Expense).
@@ -55,16 +56,16 @@ const getTransactions = async (filters = {}) => {
     const params = [];
     if (filters.categoryId) {
         if (Array.isArray(filters.categoryId)) {
-           if (filters.categoryId.length > 0) params.push(`category_id=${filters.categoryId.join(',')}`);
+            if (filters.categoryId.length > 0) params.push(`category_id=${filters.categoryId.join(',')}`);
         } else {
-           params.push(`category_id=${filters.categoryId}`);
+            params.push(`category_id=${filters.categoryId}`);
         }
     }
     if (filters.paymentMethods) {
         if (Array.isArray(filters.paymentMethods)) {
-           if (filters.paymentMethods.length > 0) params.push(`payment_method=${filters.paymentMethods.join(',')}`);
+            if (filters.paymentMethods.length > 0) params.push(`payment_method=${filters.paymentMethods.join(',')}`);
         } else {
-           params.push(`payment_method=${filters.paymentMethods}`);
+            params.push(`payment_method=${filters.paymentMethods}`);
         }
     }
     if (filters.startDate) params.push(`start_date=${filters.startDate}`);
@@ -75,29 +76,44 @@ const getTransactions = async (filters = {}) => {
     return response.data;
 };
 
-/**
- * Export transactions in CSV or XLSX format.
- * @param {string} format - 'csv' or 'xlsx'
- */
 const exportTransactions = async (format = 'csv') => {
-    const response = await apiClient.get(`/transactions/export/?format=${format}`, {
-        responseType: 'blob',
-    });
-    return response.data;
+    const token = apiClient.defaults.headers.common['Authorization'];
+    const ext = format === 'xlsx' ? 'xlsx' : 'csv';
+
+    // Ensure URL has exactly one slash between baseURL and path
+    const cleanBase = apiClient.defaults.baseURL.replace(/\/+$/, '');
+    const url = `${cleanBase}/transactions/download-export/?format=${format}`;
+
+    let fileUri = `${FileSystem.documentDirectory}finovo_transactions_${Date.now()}.${ext}`;
+    if (format === 'sample') {
+        fileUri = `${FileSystem.documentDirectory}finovo_sample_template.csv`;
+    }
+
+    console.log('[V3-DEBUG] EXPORTING:', format);
+    console.log('[V3-DEBUG] FULL URL:', url);
+    console.log('[V3-DEBUG] TOKEN DEFINED:', !!token);
+
+    const { uri, status } = await FileSystem.downloadAsync(
+        url,
+        fileUri,
+        {
+            headers: token ? { Authorization: token } : {}
+        }
+    );
+
+    console.log('[V3-DEBUG] SERVER STATUS:', status);
+
+    if (status !== 200) {
+        throw new Error(`Export failed from server. Status: ${status}`);
+    }
+    return uri;
 };
 
-/**
- * Import transactions from a file.
- * @param {File} fileObject 
- */
 const importTransactions = async (fileObject) => {
     const formData = new FormData();
     formData.append('file', fileObject);
-    const response = await apiClient.post('/transactions/import/', formData, {
-        headers: {
-            'Content-Type': 'multipart/form-data',
-        },
-    });
+    // Let React Native/fetch handle the multipart boundary automatically
+    const response = await apiClient.post('/transactions/import/', formData);
     return response.data;
 };
 

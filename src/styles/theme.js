@@ -99,7 +99,7 @@ const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
     const systemTheme = useColorScheme();
-    const [themePref, setThemePref] = useState('system'); 
+    const [themePref, setThemePref] = useState('system');
     const [currency, setCurrency] = useState(CURRENCIES[0]); // Default to USD
     const [isDark, setIsDark] = useState(systemTheme === 'dark');
 
@@ -139,23 +139,23 @@ export const ThemeProvider = ({ children }) => {
 
     const formatCurrency = (amount) => {
         const val = parseFloat(amount || 0);
-        return `${currency.symbol}${val.toLocaleString('en-US', { 
-            minimumFractionDigits: 2, 
-            maximumFractionDigits: 2 
+        return `${currency.symbol}${val.toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
         })}`;
     };
 
     const colors = isDark ? darkColors : lightColors;
 
     return (
-        <ThemeContext.Provider value={{ 
-            colors, 
-            themePref, 
-            isDark, 
-            changeTheme, 
-            currency, 
-            changeCurrency, 
-            formatCurrency 
+        <ThemeContext.Provider value={{
+            colors,
+            themePref,
+            isDark,
+            changeTheme,
+            currency,
+            changeCurrency,
+            formatCurrency
         }}>
             {children}
         </ThemeContext.Provider>
